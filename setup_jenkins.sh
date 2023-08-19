@@ -99,7 +99,15 @@ Jenkins Server
 	
 	5. create ORG folder and config gitlab project
 		
-	
+
+
+
+
+ #####
+tcpdump -s 0 -A -i [INTERFACE] 'tcp port 8080 and (tcp[((tcp[12:1] & 0xf0) >> 2):4] = 0x47455420 or tcp[((tcp[12:1] & 0xf0) >> 2):4] = 0x504F5354)'
+http://anixnoyal:116b2d79ef40cae8cf011e0754e931d77c@50c3-49-206-34-69.ngrok-free.app/project/happy-org-folder/
+
+
 
 
 
