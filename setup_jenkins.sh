@@ -56,7 +56,7 @@ athentiate
 
 ### gen ssh key
 ssh-keygen
-cat cat ~/.ssh/id_rsa.pub
+cat ~/.ssh/id_rsa.pub
 
 
 
