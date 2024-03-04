@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create a Target Group with a path pattern and register an existing EC2 instance
+
+Parameters:
+  ExistingInstanceId:
+    Type: String
+    Description: The ID of the existing EC2 instance
+
+Resources:
+  MyTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: MyTargetGroupName # Replace with your desired target group name
+      Protocol: HTTP
+      Port: 8443
+      VpcId: vpc-12345678 # Replace with your VPC ID
+      Matcher:
+        HttpCode: 200
+        PathPattern: /my/path/pattern # Replace with your desired path pattern
+      Targets:
+        - Id:
+            Ref: ExistingInstanceId
+          Port: 8443
+
+Outputs:
+  TargetGroupArn:
+    Description: The ARN of the Target Group
+    Value:
+      Ref: MyTargetGroup
