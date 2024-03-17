@@ -10,14 +10,15 @@ setenforce 0
 sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/selinux/config
 
 dnf update -y
-dnf install -y java-17-openjdk-devel mlocate tar wget git
+dnf install -y java-17-openjdk-devel mlocate tar wget git yum-plugin-versionlock lsof
 java -version
 
 wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
 rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
 sed -i  's/^gpgcheck=1/gpgcheck=0/g' /etc/yum.repos.d/jenkins.repo
 # dnf --showduplicates list jenkins | grep 387
-dnf install -y jenkins-2.387.3-1.1
+dnf install -y jenkins-2.426.2-1.1.noarc
+yum versionlock add jenkins-2.426.2-1.1.noarch
 dnf clean packages
 systemctl enable jenkins
 systemctl start jenkins
