@@ -10,7 +10,7 @@ setenforce 0
 sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/selinux/config
 
 dnf update -y
-dnf install -y java-11-openjdk-devel mlocate tar wget git
+dnf install -y java-17-openjdk-devel mlocate tar wget git
 java -version
 
 wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
