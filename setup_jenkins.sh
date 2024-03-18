@@ -9,19 +9,65 @@ systemctl stop firewalld
 setenforce 0
 sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/selinux/config
 
-dnf update -y
-dnf install -y java-17-openjdk-devel mlocate tar wget git yum-plugin-versionlock lsof
+yum update -y
+yum install -y fontconfig java-17-openjdk-devel mlocate tar wget git yum-plugin-versionlock lsof 
 java -version
 
-wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
-rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
-sed -i  's/^gpgcheck=1/gpgcheck=0/g' /etc/yum.repos.d/jenkins.repo
+
+wget -O /etc/yum.repos.d/jenkins.repo \
+    https://pkg.jenkins.io/redhat-stable/jenkins.repo
+rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+
+#sed -i  's/^gpgcheck=1/gpgcheck=0/g' /etc/yum.repos.d/jenkins.repo
 # dnf --showduplicates list jenkins | grep 387
-dnf install -y jenkins-2.426.2-1.1.noarc
+yum install -y jenkins-2.426.2-1.1.noarc
 yum versionlock add jenkins-2.426.2-1.1.noarch
 dnf clean packages
-systemctl enable jenkins
+
+systemctl --full status jenkins
+
+mkdir -p /etc/systemd/system/jenkins.service.d
+cat > override.conf <<EOF
+[Service]
+[Service]
+Environment="JAVA_OPTS=-Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Djava.io.tmpdir=/var/cache/jenkins/tmp/ -Dorg.apache.commons.jelly.tags.fmt.timeZone=America/New_York -Duser.timezone=America/New_York"
+Environment="JENKINS_OPTS=--pluginroot=/var/cache/jenkins/plugins"
+Environment="JENKINS_HTTPS_PORT=8443"
+Environment="JENKINS_PORT=-1"
+Environment="JENKINS_HTTPS_KEYSTORE=/var/cache/jenkins/keystore.jks"
+Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD=anixnoyal"
+EOF
+
+keytool -genkeypair -alias myalias -keyalg RSA -keysize 2048 -keystore keystore.jks -validity 365 \
+        -dname "CN=www.anix.jenkins.com, OU=IT, O=JENKINS, L=HYD, ST=TS, C=IN" \
+        -storepass anixnoyal -keypass anixnoyal
+
+
+
+systemctl stop firewalld
+rm -rf /etc/firewalld/zones/*
+systemctl start firewalld
+firewall-cmd --list-all
+firewall-cmd --zone=public --add-forward-port=port=443:proto=tcp:toport=8443
+firewall-cmd --zone=public --add-forward-port=port=446:proto=tcp:toport=8001
+firewall-cmd --runtime-to-permanent
+firewall-cmd --reload
+firewall-cmd --list-all
+
+mkdir -p /var/cache/jenkins/tmp
+chown -R jenkins:jenkins /var/cache/jenkins/tmp
+systemctl show jenkins
+systemd-analyze verify jenkins.service
 systemctl start jenkins
+systemctl enable jenkins
+systemctl --full status jenkins
+journalctl -u jenkins
+
+
+
+
+
+#######################
 
 cat /var/lib/jenkins/secrets/initialAdminPassword
 
