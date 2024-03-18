@@ -13,14 +13,11 @@ wget -O /etc/yum.repos.d/jenkins.repo \
     https://pkg.jenkins.io/redhat-stable/jenkins.repo
 rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
 
-keytool -genkeypair -alias myalias -keyalg RSA -keysize 2048 -keystore keystore.jks -validity 365 \
-        -dname "CN=www.anix.jenkins.com, OU=IT, O=JENKINS, L=HYD, ST=TS, C=IN" \
-        -storepass anixnoyal -keypass anixnoyal
-
 yum install -y jenkins
 yum clean all
 mkdir -p /var/cache/jenkins/tmp
 chown -R jenkins:jenkins /var/cache/jenkins/tmp
+
 mkdir -p /etc/systemd/system/jenkins.service.d
 cat > /etc/systemd/system/jenkins.service.d/override.conf <<EOF
 [Service]
@@ -31,6 +28,26 @@ Environment="JENKINS_PORT=-1"
 Environment="JENKINS_HTTPS_KEYSTORE=/var/cache/jenkins/keystore.jks"
 Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD=anixnoyal"
 EOF
+
+
+# plan-a
+# keytool -genkeypair -alias myalias -keyalg RSA -keysize 2048 -keystore keystore.jks -validity 365 \
+#         -dname "CN=www.anix.jenkins.com, OU=IT, O=JENKINS, L=HYD, ST=TS, C=IN" \
+#         -storepass anixnoyal -keypass anixnoyal
+
+### PLAN B
+openssl pkcs12 -export -out keystore.p12 -inkey private.key -in certificate.crt -certfile ca_bundle.crt
+keytool -importkeystore \
+        -srckeystore keystore.p12 \
+        -srcstoretype PKCS12 \
+        -srcstorepass pkcs12_password \
+        -destkeystore keystore.jks \
+        -deststoretype JKS \
+        -deststorepass anixnoyal \
+        -destkeypass anixnoyal \
+        -alias sreguru.in
+    
+cp keystore.jks /var/cache/jenkins/
 
 systemd-analyze verify jenkins.service
 systemctl daemon-reload
