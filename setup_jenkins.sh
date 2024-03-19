@@ -58,8 +58,7 @@ mkdir -p /var/cache/jenkins/tmp
 chown -R jenkins:jenkins /var/cache/jenkins/tmp
 systemctl show jenkins
 systemd-analyze verify jenkins.service
-systemctl start jenkins
-systemctl enable jenkins
+systemctl enable --now jenkins
 systemctl --full status jenkins
 journalctl -u jenkins
 
