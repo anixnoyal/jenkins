@@ -24,38 +24,20 @@ yum install -y jenkins-2.426.2-1.1.noarc
 yum versionlock add jenkins-2.426.2-1.1.noarch
 dnf clean packages
 
-systemctl --full status jenkins
 
+mkdir -p /var/cache/jenkins/tmp
+chown -R jenkins:jenkins /var/cache/jenkins/tmp
 mkdir -p /etc/systemd/system/jenkins.service.d
 cat > override.conf <<EOF
 [Service]
 [Service]
 Environment="JAVA_OPTS=-Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Djava.io.tmpdir=/var/cache/jenkins/tmp/ -Dorg.apache.commons.jelly.tags.fmt.timeZone=America/New_York -Duser.timezone=America/New_York"
 Environment="JENKINS_OPTS=--pluginroot=/var/cache/jenkins/plugins"
-Environment="JENKINS_HTTPS_PORT=8443"
-Environment="JENKINS_PORT=-1"
-Environment="JENKINS_HTTPS_KEYSTORE=/var/cache/jenkins/keystore.jks"
-Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD=anixnoyal"
 EOF
 
-keytool -genkeypair -alias myalias -keyalg RSA -keysize 2048 -keystore keystore.jks -validity 365 \
-        -dname "CN=www.anix.jenkins.com, OU=IT, O=JENKINS, L=HYD, ST=TS, C=IN" \
-        -storepass anixnoyal -keypass anixnoyal
-
-
-
 systemctl stop firewalld
-rm -rf /etc/firewalld/zones/*
-systemctl start firewalld
-firewall-cmd --list-all
-firewall-cmd --zone=public --add-forward-port=port=443:proto=tcp:toport=8443
-firewall-cmd --zone=public --add-forward-port=port=446:proto=tcp:toport=8001
-firewall-cmd --runtime-to-permanent
-firewall-cmd --reload
-firewall-cmd --list-all
 
-mkdir -p /var/cache/jenkins/tmp
-chown -R jenkins:jenkins /var/cache/jenkins/tmp
+
 systemctl show jenkins
 systemd-analyze verify jenkins.service
 systemctl enable --now jenkins
@@ -79,11 +61,9 @@ gitlab-plugin:1.7.14
 gitlab-branch-source:664.v877fdc293c89
 EOF
 
-
+systemctl stop jenkins
 curl -L https://github.com/jenkinsci/plugin-installation-manager-tool/releases/download/2.11.0/jenkins-plugin-manager-2.11.0.jar -o /usr/share/jenkins/plugin-manager-cli.jar
 java -jar plugin-manager-cli.jar --war /usr/share/jenkins/jenkins.war --plugin-download-directory  /var/lib/jenkins/plugins --plugin-file /usr/share/jenkins/plugins.txt --verbose
-
-systemctl stop jenkins
 systemctl start jenkins
 
 
