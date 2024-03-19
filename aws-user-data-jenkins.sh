@@ -18,6 +18,11 @@ yum clean all
 mkdir -p /var/cache/jenkins/tmp
 chown -R jenkins:jenkins /var/cache/jenkins/tmp
 
+openssl pkcs12 -export -in certificate.crt -inkey private.key -certfile ca_bundle.crt -out keystore.p12 -name jenkins  #You will be prompted to set an export password for the PKCS12 keystore. Remember this password as you will need it in the next step
+keytool -importkeystore -srckeystore keystore.p12 -srcstoretype pkcs12 -destkeystore jenkins.jks -deststoretype jks #You will be prompted for the password of the PKCS12 keystore (from the previous step) and to set a new password for the JKS keystore.
+
+
+
 mkdir -p /etc/systemd/system/jenkins.service.d
 cat > /etc/systemd/system/jenkins.service.d/override.conf <<EOF
 [Service]
@@ -25,7 +30,7 @@ Environment="JAVA_OPTS=-Djava.awt.headless=true -Djava.net.preferIPv4Stack=true 
 Environment="JENKINS_OPTS=--pluginroot=/var/cache/jenkins/plugins"
 Environment="JENKINS_HTTPS_PORT=8443"
 Environment="JENKINS_PORT=-1"
-Environment="JENKINS_HTTPS_KEYSTORE=/var/cache/jenkins/keystore.jks"
+Environment="JENKINS_HTTPS_KEYSTORE=/var/cache/jenkins/jenkins.jks"
 Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD=anixnoyal"
 EOF
 
