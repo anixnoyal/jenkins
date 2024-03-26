@@ -30,7 +30,6 @@ chown -R jenkins:jenkins /var/cache/jenkins/tmp
 mkdir -p /etc/systemd/system/jenkins.service.d
 cat > override.conf <<EOF
 [Service]
-[Service]
 Environment="JAVA_OPTS=-Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Djava.io.tmpdir=/var/cache/jenkins/tmp/ -Dorg.apache.commons.jelly.tags.fmt.timeZone=America/New_York -Duser.timezone=America/New_York"
 Environment="JENKINS_OPTS=--pluginroot=/var/cache/jenkins/plugins"
 EOF
