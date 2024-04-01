@@ -27,25 +27,25 @@ dnf clean packages
 
 mkdir -p /var/cache/jenkins/tmp
 chown -R jenkins:jenkins /var/cache/jenkins/tmp
+
+mkdir -p /var/cache/jenkins/plugins
+chown -R jenkins:jenkins /var/cache/jenkins/plugins
+
 mkdir -p /etc/systemd/system/jenkins.service.d
-cat > override.conf <<EOF
+cat > /etc/systemd/system/jenkins.service.d/override.conf <<EOF
 [Service]
-Environment="JAVA_OPTS=-Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Djava.io.tmpdir=/var/cache/jenkins/tmp/ -Dorg.apache.commons.jelly.tags.fmt.timeZone=America/New_York -Duser.timezone=America/New_York"
+Environment="JAVA_OPTS=-Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Djava.io.tmpdir=/var/cache/jenkins/tmp/"
 Environment="JENKINS_OPTS=--pluginroot=/var/cache/jenkins/plugins"
 EOF
 
-systemctl stop firewalld
-
-
-systemctl show jenkins
 systemd-analyze verify jenkins.service
+systemctl daemon-reload
 systemctl enable --now jenkins
+
 systemctl --full status jenkins
+systemctl show jenkins
+
 journalctl -u jenkins
-
-
-
-
 
 #######################
 
