@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jenkins-agent
+spec:
+  containers:
+  - name: jenkins-agent
+    image: openjdk:17
+    command: ["/bin/sh", "-c"]
+    args:
+      - |
+        # Download the agent.jar file
+        curl -o /agent.jar http://your-jenkins-server-url/agent.jar &&
+        # Run the agent.jar file
+        java -jar /agent.jar
