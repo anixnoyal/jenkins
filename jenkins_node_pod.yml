@@ -13,3 +13,28 @@ spec:
         curl -o /agent.jar http://your-jenkins-server-url/agent.jar &&
         # Run the agent.jar file
         java -jar /agent.jar
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jenkins-agent
+spec:
+  containers:
+  - name: jenkins-agent
+    image: jenkins/inbound-agent:latest
+    env:
+      - name: JENKINS_URL
+        value: "http://your-jenkins-server:8080"
+      - name: JENKINS_SECRET
+        value: "your-agent-secret"
+      - name: JENKINS_AGENT_NAME
+        value: "your-agent-name"
+      - name: JENKINS_AGENT_WORKDIR
+        value: "/var/jenkins_home"
+    volumeMounts:
+      - name: workdir
+        mountPath: "/var/jenkins_home"
+  volumes:
+    - name: workdir
+      emptyDir: {}
