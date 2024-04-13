@@ -1,4 +1,6 @@
-Environment="JAVA_OPTS=-DsessionTimeout=60
+https://www.jenkins.io/doc/book/installing/initial-settings/#:~:text=%2D%2DsessionTimeout=$TIMEOUT.%20Sets%20the%20http%20session%20timeout%20value,webapp%20specifies%2C%20and%20then%20to%2060%20minutes
+
+
 
 // Output the current session timeout
 println("Session timeout is: ${System.getProperty('sessionTimeout')} minutes")
