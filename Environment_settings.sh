@@ -1,10 +1,3 @@
 [Service]
-Environment="JAVA_OPTS=-Xmx1g"
-Environment="JAVA_OPTS=${JAVA_OPTS} -Xms1g"
-Environment="JAVA_OPTS=${JAVA_OPTS} -XX:+UseG1GC"
-Environment="JAVA_OPTS=${JAVA_OPTS} -XX:G1ReservePercent=20"
-Environment="JAVA_OPTS=${JAVA_OPTS} -XX:InitiatingHeapOccupancyPercent=35"
-Environment="JAVA_OPTS=${JAVA_OPTS} -XX:+ParallelRefProcEnabled"
-Environment="JAVA_OPTS=${JAVA_OPTS} -XX:+PerfDisableSharedMem"
-Environment="JAVA_OPTS=${JAVA_OPTS} -XX:+AlwaysPreTouch"
-Environment="JAVA_OPTS=${JAVA_OPTS} -Xlog:gc*:file=/var/log/jenkins/gc.log:time,tags:filecount=10,filesize=10M"
+Nice="-19"
+Environment="JAVA_OPTS=-Xmx1g -Xms1g -XX:+UseG1GC -XX:G1ReservePercent=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ParallelRefProcEnabled -XX:+PerfDisableSharedMem -XX:+AlwaysPreTouch -Xlog:gc*:file=/var/log/jenkins/gc.log:time,tags:filecount=10,filesize=10M"
