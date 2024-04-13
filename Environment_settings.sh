@@ -10,3 +10,10 @@ Environment="JENKINS_LOG=/var/log/jenkins/jenkins.log"
 # Environment="JENKINS_PORT=-1"
 # Environment="JENKINS_HTTPS_KEYSTORE=/var/cache/jenkins/jenkins.jks"
 # Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD=mypassword"
+
+
+
+#### list jenkins veriables from script console
+System.getenv().each { key, value ->
+    println "${key}: ${value}"
+}
