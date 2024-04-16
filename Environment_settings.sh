@@ -11,7 +11,12 @@ Environment="JENKINS_LOG=/var/log/jenkins/jenkins.log"
 # Environment="JENKINS_HTTPS_KEYSTORE=/var/cache/jenkins/jenkins.jks"
 # Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD=mypassword"
 
-
+##
+mkdir /var/log/jenkins
+touch /var/log/jenkins/heapdump.hprof
+touch  /var/log/jenkins/jenkins.log
+touch /var/log/jenkins/gc.log
+chown -R jenkins: /var/log/jenkins
 
 #### list jenkins veriables from script console
 System.getenv().each { key, value ->
