@@ -1,1 +1,2 @@
-jmap -dump:live,format=b,file=heapdump.hprof-$(date +%Y-%m-%d_%H-%M-%S) $(pgrep -f jenkins)
+
+cd /tmp && /usr/bin/jmap -dump:live,format=b,file=heapdump-$(date +%Y%m%d%H%M%S).hprof $(pgrep -f jenkins)
