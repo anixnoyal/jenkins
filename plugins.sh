@@ -1,4 +1,6 @@
-
+#need plugins 
+configuration-as-code
+performance
 
 
 #list of plugins
