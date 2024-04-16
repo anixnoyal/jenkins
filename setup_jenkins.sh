@@ -13,7 +13,6 @@ yum update -y
 yum install -y fontconfig java-17-openjdk-devel mlocate tar wget git yum-plugin-versionlock lsof 
 java -version
 
-
 wget -O /etc/yum.repos.d/jenkins.repo \
     https://pkg.jenkins.io/redhat-stable/jenkins.repo
 rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
@@ -24,26 +23,9 @@ yum install -y jenkins-2.426.2-1.1.noarc
 yum versionlock add jenkins-2.426.2-1.1.noarch
 dnf clean packages
 
-
-mkdir -p /var/cache/jenkins/tmp
-chown -R jenkins:jenkins /var/cache/jenkins/tmp
-
-mkdir -p /var/cache/jenkins/plugins
-chown -R jenkins:jenkins /var/cache/jenkins/plugins
-
-mkdir -p /etc/systemd/system/jenkins.service.d
-cat > /etc/systemd/system/jenkins.service.d/override.conf <<EOF
-[Service]
-Environment="JAVA_OPTS=-Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Djava.io.tmpdir=/var/cache/jenkins/tmp/"
-Environment="JENKINS_OPTS=--pluginroot=/var/cache/jenkins/plugins"
-EOF
-
-systemd-analyze verify jenkins.service
-systemctl daemon-reload
-systemctl enable --now jenkins
-
-systemctl --full status jenkins
-systemctl show jenkins
+systemctl enable jenkins
+systemctl start jenkins
+systemctl status jenkins
 
 journalctl -u jenkins
 
@@ -65,74 +47,6 @@ curl -L https://github.com/jenkinsci/plugin-installation-manager-tool/releases/d
 java -jar plugin-manager-cli.jar --war /usr/share/jenkins/jenkins.war --plugin-download-directory  /var/lib/jenkins/plugins --plugin-file /usr/share/jenkins/plugins.txt --verbose
 systemctl start jenkins
 
-
-### NGROK
-cd /root/
-wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
-tar xvzf /root/ngrok-v3-stable-linux-amd64.tgz -C /usr/local/bin
-cd /usr/local/bin
-
-#login : https://dashboard.ngrok.com/get-started/setup
-ngrok config add-authtoken 2U7fQzeOMCGyXKraWKDiGqk0Yly_6168XnbChk1sD8XEhgQR8
-./ngrok http 8080
-login page
-athentiate 
-
-
-### gen ssh key
-ssh-keygen
-cat ~/.ssh/id_rsa.pub
-
-
-
-
-#flow of setup 
-Gitlab portal
-	1. generate persoanl access token
-		glpat-kRzrsoPzVercH3JojF4z
-	2. add SSH key
-	
-
-Jenkins Server
-	1. setup jenkins sever
-	2. install necessary plugins
-		gitlab
-		gitlab authentication
-		gitlab API
-		login pulgin extension
-		gitlab multi branch
-
-	3. setup credentials
-		1.  useing gitlab personal token create below credentils 
-			a. Add a credentials as "KIND:Gitlab API token" 
-			b.Add a credentilas as "KIND:GitLab personal Access token"				
-		2. Add credentails as "SSH username with private key" ( get if from OS level)
-
-			
-	4. configure system
-		1. change global security "git host key verification - no"
-		1. Gitlab :
-			connection name:
-			gitlab hot url:
-			credentails : "API Token for accessing Gitlab"
-							choose from dropdwon list
-		
-		2. GitLab Servers
-			server url:
-			Credentials : "The Personal Access Token for GitLab APIs access"
-			
-	
-	5. create ORG folder and config gitlab project
-		
-
-
-
-
  #####
 tcpdump -s 0 -A -i [INTERFACE] 'tcp port 8080 and (tcp[((tcp[12:1] & 0xf0) >> 2):4] = 0x47455420 or tcp[((tcp[12:1] & 0xf0) >> 2):4] = 0x504F5354)'
 http://anixnoyal:116b2d79ef40cae8cf011e0754e931d77c@50c3-49-206-34-69.ngrok-free.app/project/happy-org-folder/
-
-
-
-
-
