@@ -1,5 +1,8 @@
 mkdir -p /etc/systemd/system/jenkins.service.d
 cat > /etc/systemd/system/jenkins.service.d/override.conf <<EOF
+[Unit]
+ConditionPathIsMountPoint=/mnt/data
+
 [Service]
 Nice=-19
 Environment="JAVA_OPTS=-Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Xmx1g -Xms1g -XX:+UseG1GC -XX:G1ReservePercent=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ParallelRefProcEnabled -XX:+PerfDisableSharedMem -XX:+AlwaysPreTouch -Xlog:gc*:file=/var/log/jenkins/gc.log:time,tags:filecount=10,filesize=10M -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/jenkins/heapdump.hprof -Djava.io.tmpdir=/var/cache/jenkins/tmp/"
