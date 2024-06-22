@@ -14,3 +14,11 @@ java.util.logging.FileHandler.append=true
 
 org.eclipse.jetty.server.RequestLog.level=ALL
 org.eclipse.jetty.server.RequestLog.handler=java.util.logging.FileHandler
+
+
+
+
+while [ "$(aws ec2 describe-volumes-modifications --volume-ids $VOLUME_ID --query "VolumesModifications[0].ModificationState" --output text)" != "completed" ]; do
+    sleep 10
+    echo -n "."
+done
