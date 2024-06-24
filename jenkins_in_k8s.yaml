@@ -1,0 +1,110 @@
+//cat jenkins.crt | base64
+//cat jenkins.key | base64
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jenkins-pv
+  namespace: anix
+spec:
+  capacity:
+    storage: 20Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  awsElasticBlockStore:
+    volumeID: <your-ebs-volume-id>  # Replace with your actual EBS volume ID
+    fsType: ext4
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jenkins-pvc
+  namespace: anix
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jenkins-java-opts
+  namespace: anix
+data:
+  JAVA_OPTS: "-Djenkins.http.ssl.keyStore=/var/jenkins_home/ssl/jenkins.key -Djenkins.http.ssl.keyStorePassword=<your-password>"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jenkins-tls
+  namespace: anix
+type: kubernetes.io/tls
+data:
+  tls.crt: <base64-encoded-cert>
+  tls.key: <base64-encoded-key>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins
+  namespace: anix
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      nodeSelector:
+        jenkins-node: "true"
+      containers:
+      - name: jenkins
+        image: jenkins/jenkins:lts
+        ports:
+          - containerPort: 8443
+        volumeMounts:
+          - name: jenkins-tls
+            mountPath: /var/jenkins_home/ssl
+            readOnly: true
+          - name: jenkins-home
+            mountPath: /var/jenkins_home
+        env:
+          - name: JAVA_OPTS
+            valueFrom:
+              configMapKeyRef:
+                name: jenkins-java-opts
+                key: JAVA_OPTS
+      volumes:
+      - name: jenkins-tls
+        secret:
+          secretName: jenkins-tls
+      - name: jenkins-home
+        persistentVolumeClaim:
+          claimName: jenkins-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins-nlb
+  namespace: anix
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+spec:
+  selector:
+    app: jenkins   # Selects pods with the app label set to jenkins
+  ports:
+    - name: https
+      port: 443
+      targetPort: 8443
+  type: LoadBalancer
