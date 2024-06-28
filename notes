@@ -1,2 +1,7 @@
 
+[Service]
+ExecStartPre=/bin/sh -c 'rm -f /var/spool/clientmqueue/*'
+ExecStart=
+
+
 JAVA_ARGS="-Dmail.smtp.host=localhost -Dmail.smtp.port=25"
