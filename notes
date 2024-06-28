@@ -1,5 +1,8 @@
 
 
+sed -i -e ':a' -e '1,100!{P;N;D;};N;ba' example.txt
+
+
 awk '/^p/ { pid = substr($0, 2) } /^c/ { command = substr($0, 2) } pid && command { print pid, command; pid = command = "" }' lsof_output.txt
 
 
