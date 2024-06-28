@@ -1,0 +1,2 @@
+
+JAVA_ARGS="-Dmail.smtp.host=localhost -Dmail.smtp.port=25"
