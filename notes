@@ -1,4 +1,8 @@
 
+awk '/^p/ { pid = substr($0, 2) } /^c/ { command = substr($0, 2) } pid && command { print "PID:", pid, "Command:", command; pid = command = "" }' lsof_output.txt
+
+
+
 [Service]
 ExecStartPre=/bin/sh -c 'rm -f /var/spool/clientmqueue/*'
 ExecStart=
