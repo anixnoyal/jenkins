@@ -6,13 +6,16 @@
   vars:
     notification_email: "admin@example.com"
     jenkins_pid: "{{ lookup('pipe', 'pgrep -f jenkins.war') }}"
+    artifactory_url: "http://artifactory.example.com/artifactory/my-repo"
+    artifactory_user: "your_username"
+    artifactory_password: "your_password"
   tasks:
     - name: Gather system facts
       setup:
 
     - name: Take Jenkins thread dump
       shell: >
-        jcmd {{ jenkins_pid }} Thread.print > /tmp/jenkins_thread_dump.txt
+        jcmd {{ jenkins_pid }} Thread.print > /tmp/jenkins_thread_dump_{{ ansible_date_time.epoch }}.txt
       register: thread_dump_result
       failed_when: thread_dump_result.rc != 0
     - name: Display thread dump status
@@ -26,7 +29,7 @@
 
     - name: Take Jenkins heap dump
       shell: >
-        jcmd {{ jenkins_pid }} GC.heap_dump /tmp/jenkins_heap_dump.hprof
+        jcmd {{ jenkins_pid }} GC.heap_dump /tmp/jenkins_heap_dump_{{ ansible_date_time.epoch }}.hprof
       register: heap_dump_result
       failed_when: heap_dump_result.rc != 0
       when: thread_dump_result.rc == 0
@@ -103,15 +106,63 @@
         msg: "Sendmail start status: {{ start_sendmail_result.state == 'started' | ternary('SUCCESS', 'FAILED') }}"
       when: start_jenkins_result.state == 'started'
 
-    - name: Fail if starting sendmail failed
-      fail:
-        msg: "Starting sendmail failed on host {{ inventory_hostname }}. Stopping playbook."
-      when: start_sendmail_result.state != 'started'
+    - name: Create tar.gz of dumps
+      archive:
+        path:
+          - /tmp/jenkins_thread_dump_{{ ansible_date_time.epoch }}.txt
+          - /tmp/jenkins_heap_dump_{{ ansible_date_time.epoch }}.hprof
+        dest: /tmp/jenkins_dumps_{{ ansible_date_time.epoch }}.tar.gz
+      when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0
+
+    - name: Upload tar.gz to Artifactory
+      uri:
+        url: "{{ artifactory_url }}/jenkins_dumps_{{ ansible_date_time.epoch }}.tar.gz"
+        method: PUT
+        user: "{{ artifactory_user }}"
+        password: "{{ artifactory_password }}"
+        body: "{{ lookup('file', '/tmp/jenkins_dumps_{{ ansible_date_time.epoch }}.tar.gz') }}"
+        headers:
+          Content-Type: application/octet-stream
+        status_code: 201
+      when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0
+
+    - name: Remove temporary dump files
+      file:
+        path: "/tmp/jenkins_thread_dump_{{ ansible_date_time.epoch }}.txt"
+        state: absent
+      when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0
+
+    - name: Remove temporary heap dump files
+      file:
+        path: "/tmp/jenkins_heap_dump_{{ ansible_date_time.epoch }}.hprof"
+        state: absent
+      when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0
+
+    - name: Remove temporary tar.gz file
+      file:
+        path: "/tmp/jenkins_dumps_{{ ansible_date_time.epoch }}.tar.gz"
+        state: absent
+      when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0
+
+    - name: Get Jenkins service status
+      command: systemctl status jenkins
+      register: jenkins_status
+
+    - name: Get filesystem disk space usage
+      command: df -hT
+      register: disk_usage
 
     - name: Send success email
       mail:
         host: localhost
         to: "{{ notification_email }}"
         subject: "Jenkins Maintenance Playbook Success"
-        body: "All steps completed successfully on host {{ ansible_facts['hostname'] }}."
+        body: |
+          All steps completed successfully on host {{ ansible_facts['hostname'] }}.
+
+          Jenkins service status:
+          {{ jenkins_status.stdout }}
+
+          Filesystem disk space usage:
+          {{ disk_usage.stdout }}
       when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0 and stop_sendmail_result.state == 'stopped' and stop_jenkins_result.state == 'stopped' and start_jenkins_result.state == 'started' and start_sendmail_result.state == 'started'
