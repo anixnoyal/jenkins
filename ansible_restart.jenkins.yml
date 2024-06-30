@@ -1,0 +1,117 @@
+---
+- name: Jenkins Maintenance Playbook
+  hosts: localhost
+  become: yes
+  connection: local
+  vars:
+    notification_email: "admin@example.com"
+    jenkins_pid: "{{ lookup('pipe', 'pgrep -f jenkins.war') }}"
+  tasks:
+    - name: Gather system facts
+      setup:
+
+    - name: Take Jenkins thread dump
+      shell: >
+        jcmd {{ jenkins_pid }} Thread.print > /tmp/jenkins_thread_dump.txt
+      register: thread_dump_result
+      failed_when: thread_dump_result.rc != 0
+    - name: Display thread dump status
+      debug:
+        msg: "Thread dump status: {{ thread_dump_result.rc == 0 | ternary('SUCCESS', 'FAILED') }}"
+
+    - name: Fail if thread dump failed
+      fail:
+        msg: "Thread dump failed on host {{ inventory_hostname }}. Stopping playbook."
+      when: thread_dump_result.rc != 0
+
+    - name: Take Jenkins heap dump
+      shell: >
+        jcmd {{ jenkins_pid }} GC.heap_dump /tmp/jenkins_heap_dump.hprof
+      register: heap_dump_result
+      failed_when: heap_dump_result.rc != 0
+      when: thread_dump_result.rc == 0
+    - name: Display heap dump status
+      debug:
+        msg: "Heap dump status: {{ heap_dump_result.rc == 0 | ternary('SUCCESS', 'FAILED') }}"
+      when: thread_dump_result.rc == 0
+
+    - name: Fail if heap dump failed
+      fail:
+        msg: "Heap dump failed on host {{ inventory_hostname }}. Stopping playbook."
+      when: heap_dump_result.rc != 0
+
+    - name: Stop sendmail service
+      service:
+        name: sendmail
+        state: stopped
+      register: stop_sendmail_result
+      failed_when: stop_sendmail_result.state != 'stopped'
+      when: heap_dump_result.rc == 0
+    - name: Display sendmail stop status
+      debug:
+        msg: "Sendmail stop status: {{ stop_sendmail_result.state == 'stopped' | ternary('SUCCESS', 'FAILED') }}"
+      when: heap_dump_result.rc == 0
+
+    - name: Fail if stopping sendmail failed
+      fail:
+        msg: "Stopping sendmail failed on host {{ inventory_hostname }}. Stopping playbook."
+      when: stop_sendmail_result.state != 'stopped'
+
+    - name: Stop Jenkins service
+      service:
+        name: jenkins
+        state: stopped
+      register: stop_jenkins_result
+      failed_when: stop_jenkins_result.state != 'stopped'
+      when: stop_sendmail_result.state == 'stopped'
+    - name: Display Jenkins stop status
+      debug:
+        msg: "Jenkins stop status: {{ stop_jenkins_result.state == 'stopped' | ternary('SUCCESS', 'FAILED') }}"
+      when: stop_sendmail_result.state == 'stopped'
+
+    - name: Fail if stopping Jenkins failed
+      fail:
+        msg: "Stopping Jenkins failed on host {{ inventory_hostname }}. Stopping playbook."
+      when: stop_jenkins_result.state != 'stopped'
+
+    - name: Start Jenkins service
+      service:
+        name: jenkins
+        state: started
+      register: start_jenkins_result
+      failed_when: start_jenkins_result.state != 'started'
+      when: stop_jenkins_result.state == 'stopped'
+    - name: Display Jenkins start status
+      debug:
+        msg: "Jenkins start status: {{ start_jenkins_result.state == 'started' | ternary('SUCCESS', 'FAILED') }}"
+      when: stop_jenkins_result.state == 'stopped'
+
+    - name: Fail if starting Jenkins failed
+      fail:
+        msg: "Starting Jenkins failed on host {{ inventory_hostname }}. Stopping playbook."
+      when: start_jenkins_result.state != 'started'
+
+    - name: Start sendmail service
+      service:
+        name: sendmail
+        state: started
+      register: start_sendmail_result
+      failed_when: start_sendmail_result.state != 'started'
+      when: start_jenkins_result.state == 'started'
+    - name: Display sendmail start status
+      debug:
+        msg: "Sendmail start status: {{ start_sendmail_result.state == 'started' | ternary('SUCCESS', 'FAILED') }}"
+      when: start_jenkins_result.state == 'started'
+
+    - name: Fail if starting sendmail failed
+      fail:
+        msg: "Starting sendmail failed on host {{ inventory_hostname }}. Stopping playbook."
+      when: start_sendmail_result.state != 'started'
+
+    - name: Send success email
+      mail:
+        host: localhost
+        to: "{{ notification_email }}"
+        subject: "Jenkins Maintenance Playbook Success"
+        body: "All steps completed successfully on host {{ ansible_facts['hostname'] }}."
+      when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0 and stop_sendmail_result.state == 'stopped' and stop_jenkins_result.state == 'stopped' and start_jenkins_result.state == 'started' and start_sendmail_result.state == 'started'
