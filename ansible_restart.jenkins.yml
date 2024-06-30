@@ -9,6 +9,9 @@
     artifactory_url: "http://artifactory.example.com/artifactory/my-repo"
     artifactory_user: "your_username"
     artifactory_password: "your_password"
+    jenkins_start_timeout: 1800  # Timeout in seconds (30 minutes)
+    jenkins_check_interval: 60   # Check interval in seconds (1 minute)
+
   tasks:
     - name: Gather system facts
       setup:
@@ -82,17 +85,19 @@
         name: jenkins
         state: started
       register: start_jenkins_result
-      failed_when: start_jenkins_result.state != 'started'
-      when: stop_jenkins_result.state == 'stopped'
+      until: start_jenkins_result.status == 'started'
+      retries: "{{ (jenkins_start_timeout // jenkins_check_interval) | default(0) }}"
+      delay: "{{ jenkins_check_interval }}"
+      ignore_errors: yes
     - name: Display Jenkins start status
       debug:
-        msg: "Jenkins start status: {{ start_jenkins_result.state == 'started' | ternary('SUCCESS', 'FAILED') }}"
-      when: stop_jenkins_result.state == 'stopped'
+        msg: "Jenkins start status: {{ start_jenkins_result.status }}"
+      when: start_jenkins_result.status == 'started'
 
     - name: Fail if starting Jenkins failed
       fail:
         msg: "Starting Jenkins failed on host {{ inventory_hostname }}. Stopping playbook."
-      when: start_jenkins_result.state != 'started'
+      when: start_jenkins_result.status != 'started'
 
     - name: Start sendmail service
       service:
@@ -100,11 +105,16 @@
         state: started
       register: start_sendmail_result
       failed_when: start_sendmail_result.state != 'started'
-      when: start_jenkins_result.state == 'started'
+      when: start_jenkins_result.status == 'started'
     - name: Display sendmail start status
       debug:
         msg: "Sendmail start status: {{ start_sendmail_result.state == 'started' | ternary('SUCCESS', 'FAILED') }}"
-      when: start_jenkins_result.state == 'started'
+      when: start_jenkins_result.status == 'started'
+
+    - name: Fail if starting sendmail failed
+      fail:
+        msg: "Starting sendmail failed on host {{ inventory_hostname }}. Stopping playbook."
+      when: start_sendmail_result.state != 'started'
 
     - name: Create tar.gz of dumps
       archive:
@@ -165,4 +175,4 @@
 
           Filesystem disk space usage:
           {{ disk_usage.stdout }}
-      when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0 and stop_sendmail_result.state == 'stopped' and stop_jenkins_result.state == 'stopped' and start_jenkins_result.state == 'started' and start_sendmail_result.state == 'started'
+      when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0 and stop_sendmail_result.state == 'stopped' and stop_jenkins_result.state == 'stopped' and start_jenkins_result.status == 'started' and start_sendmail_result.state == 'started'
