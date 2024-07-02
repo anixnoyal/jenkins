@@ -128,3 +128,13 @@ fi
 
 # Exit with appropriate status
 exit $?
+
+
+
+---
+- name: Execute Jenkins Maintenance Script
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Run Jenkins maintenance script
+      script: ./jenkins_maintenance.sh
