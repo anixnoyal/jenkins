@@ -1,4 +1,10 @@
 
+[Service]
+Environment="JAVA_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9090 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
+ExecStart=/usr/bin/java $JAVA_OPTS -jar /usr/share/jenkins/jenkins.war
+
+
+
 
 sed -i -e ':a' -e '1,100!{P;N;D;};N;ba' example.txt
 
