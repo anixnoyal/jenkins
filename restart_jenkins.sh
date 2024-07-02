@@ -9,6 +9,7 @@ ARTIFACTORY_PASSWORD="your_password"
 TIMESTAMP=$(date +%Y%m%d%H%M%S)
 JENKINS_START_TIMEOUT=1800  # Timeout in seconds (30 minutes)
 JENKINS_CHECK_INTERVAL=60   # Check interval in seconds (1 minute)
+NOTIFICATION_EMAIL="admin@example.com"
 
 # Function to take thread dump
 take_thread_dump() {
@@ -25,6 +26,12 @@ take_heap_dump() {
 # Function to stop sendmail service
 stop_sendmail() {
     systemctl stop sendmail
+    return $?
+}
+
+# Function to start sendmail service
+start_sendmail() {
+    systemctl start sendmail
     return $?
 }
 
@@ -45,12 +52,6 @@ start_jenkins() {
         ((i++))
     done
     return 1
-}
-
-# Function to start sendmail service
-start_sendmail() {
-    systemctl start sendmail
-    return $?
 }
 
 # Function to create tar.gz of dumps
@@ -77,6 +78,20 @@ cleanup_files() {
     return $?
 }
 
+# Function to send notification email
+send_notification_email() {
+    df_output=$(df -hT)
+    jenkins_status=$(systemctl status jenkins)
+    
+    echo -e "Subject: Jenkins Maintenance Notification\n\n"\
+            "Jenkins maintenance tasks completed.\n\n"\
+            "Filesystem Disk Usage:\n$df_output\n\n"\
+            "Jenkins Status:\n$jenkins_status" \
+    | sendmail -t "$NOTIFICATION_EMAIL"
+    
+    return $?
+}
+
 # Main script execution
 
 # Perform maintenance tasks
@@ -93,6 +108,7 @@ cleanup_files
 # Check if all tasks were successful
 if [[ $? -eq 0 ]]; then
     echo "Jenkins maintenance tasks completed successfully."
+    send_notification_email
 else
     echo "Jenkins maintenance tasks failed."
 fi
