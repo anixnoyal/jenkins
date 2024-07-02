@@ -63,25 +63,25 @@ start_jenkins() {
 
 # Function to create tar.gz of dumps
 create_tar_archive() {
-    tar -czf "$DUMPS_DIRECTORY/jenkins_dumps_$TIMESTAMP.tar.gz" \
-        "$DUMPS_DIRECTORY/jenkins_thread_dump_$TIMESTAMP.txt" \
-        "$DUMPS_DIRECTORY/jenkins_heap_dump_$TIMESTAMP.hprof"
+    tar -czf "$DUMPS_DIRECTORY/jenkins_dumps_${HOSTNAME}_${TIMESTAMP}.tar.gz" \
+        "$DUMPS_DIRECTORY/jenkins_thread_dump_${HOSTNAME}_${TIMESTAMP}.txt" \
+        "$DUMPS_DIRECTORY/jenkins_heap_dump_${HOSTNAME}_${TIMESTAMP}.hprof"
     return $?
 }
 
 # Function to upload tar.gz to Artifactory
 upload_to_artifactory() {
     curl -u "$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD" \
-         -T "$DUMPS_DIRECTORY/jenkins_dumps_$TIMESTAMP.tar.gz" \
-         "$ARTIFACTORY_URL/jenkins_dumps_$TIMESTAMP.tar.gz"
+         -T "$DUMPS_DIRECTORY/jenkins_dumps_${HOSTNAME}_${TIMESTAMP}.tar.gz" \
+         "$ARTIFACTORY_URL/jenkins_dumps_${HOSTNAME}_${TIMESTAMP}.tar.gz"
     return $?
 }
 
 # Function to remove dumps and tar.gz after upload
 cleanup_files() {
-    rm -f "$DUMPS_DIRECTORY/jenkins_thread_dump_$TIMESTAMP.txt" \
-          "$DUMPS_DIRECTORY/jenkins_heap_dump_$TIMESTAMP.hprof" \
-          "$DUMPS_DIRECTORY/jenkins_dumps_$TIMESTAMP.tar.gz"
+    rm -f "$DUMPS_DIRECTORY/jenkins_thread_dump_${HOSTNAME}_${TIMESTAMP}.txt" \
+          "$DUMPS_DIRECTORY/jenkins_heap_dump_${HOSTNAME}_${TIMESTAMP}.hprof" \
+          "$DUMPS_DIRECTORY/jenkins_dumps_${HOSTNAME}_${TIMESTAMP}.tar.gz"
     return $?
 }
 
