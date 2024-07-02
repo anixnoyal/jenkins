@@ -18,7 +18,7 @@
 
     - name: Take Jenkins thread dump
       shell: >
-        jcmd {{ jenkins_pid }} Thread.print > /tmp/jenkins_thread_dump_{{ ansible_date_time.epoch }}.txt
+        jcmd {{ jenkins_pid }} Thread.print > /tmp/jenkins_thread_dump_{{ ansible_date_time.iso8601_basic }}.txt
       register: thread_dump_result
       failed_when: thread_dump_result.rc != 0
     - name: Display thread dump status
@@ -32,7 +32,7 @@
 
     - name: Take Jenkins heap dump
       shell: >
-        jcmd {{ jenkins_pid }} GC.heap_dump /tmp/jenkins_heap_dump_{{ ansible_date_time.epoch }}.hprof
+        jcmd {{ jenkins_pid }} GC.heap_dump /tmp/jenkins_heap_dump_{{ ansible_date_time.iso8601_basic }}.hprof
       register: heap_dump_result
       failed_when: heap_dump_result.rc != 0
       when: thread_dump_result.rc == 0
@@ -85,19 +85,21 @@
         name: jenkins
         state: started
       register: start_jenkins_result
-      until: start_jenkins_result.status == 'started'
-      retries: "{{ (jenkins_start_timeout // jenkins_check_interval) | default(0) }}"
-      delay: "{{ jenkins_check_interval }}"
-      ignore_errors: yes
+      failed_when: start_jenkins_result.state != 'started'
     - name: Display Jenkins start status
       debug:
-        msg: "Jenkins start status: {{ start_jenkins_result.status }}"
-      when: start_jenkins_result.status == 'started'
+        msg: "Jenkins start status: {{ start_jenkins_result.state == 'started' | ternary('SUCCESS', 'FAILED') }}"
 
-    - name: Fail if starting Jenkins failed
+    - name: Wait for Jenkins to be up and running
+      wait_for:
+        port: 8080  # Adjust the port if needed
+        delay: "{{ jenkins_check_interval }}"
+        timeout: "{{ jenkins_start_timeout }}"
+      when: start_jenkins_result.state == 'started'
+    - name: Fail if Jenkins did not start within timeout
       fail:
-        msg: "Starting Jenkins failed on host {{ inventory_hostname }}. Stopping playbook."
-      when: start_jenkins_result.status != 'started'
+        msg: "Jenkins did not start within {{ jenkins_start_timeout }} seconds."
+      when: start_jenkins_result.failed is defined
 
     - name: Start sendmail service
       service:
@@ -105,11 +107,11 @@
         state: started
       register: start_sendmail_result
       failed_when: start_sendmail_result.state != 'started'
-      when: start_jenkins_result.status == 'started'
+      when: start_jenkins_result.state == 'started'
     - name: Display sendmail start status
       debug:
         msg: "Sendmail start status: {{ start_sendmail_result.state == 'started' | ternary('SUCCESS', 'FAILED') }}"
-      when: start_jenkins_result.status == 'started'
+      when: start_jenkins_result.state == 'started'
 
     - name: Fail if starting sendmail failed
       fail:
@@ -119,18 +121,18 @@
     - name: Create tar.gz of dumps
       archive:
         path:
-          - /tmp/jenkins_thread_dump_{{ ansible_date_time.epoch }}.txt
-          - /tmp/jenkins_heap_dump_{{ ansible_date_time.epoch }}.hprof
-        dest: /tmp/jenkins_dumps_{{ ansible_date_time.epoch }}.tar.gz
+          - /tmp/jenkins_thread_dump_{{ ansible_date_time.iso8601_basic }}.txt
+          - /tmp/jenkins_heap_dump_{{ ansible_date_time.iso8601_basic }}.hprof
+        dest: /tmp/jenkins_dumps_{{ ansible_date_time.iso8601_basic }}.tar.gz
       when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0
 
     - name: Upload tar.gz to Artifactory
       uri:
-        url: "{{ artifactory_url }}/jenkins_dumps_{{ ansible_date_time.epoch }}.tar.gz"
+        url: "{{ artifactory_url }}/jenkins_dumps_{{ ansible_date_time.iso8601_basic }}.tar.gz"
         method: PUT
         user: "{{ artifactory_user }}"
         password: "{{ artifactory_password }}"
-        body: "{{ lookup('file', '/tmp/jenkins_dumps_{{ ansible_date_time.epoch }}.tar.gz') }}"
+        body: "{{ lookup('file', '/tmp/jenkins_dumps_{{ ansible_date_time.iso8601_basic }}.tar.gz') }}"
         headers:
           Content-Type: application/octet-stream
         status_code: 201
@@ -138,19 +140,19 @@
 
     - name: Remove temporary dump files
       file:
-        path: "/tmp/jenkins_thread_dump_{{ ansible_date_time.epoch }}.txt"
+        path: "/tmp/jenkins_thread_dump_{{ ansible_date_time.iso8601_basic }}.txt"
         state: absent
       when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0
 
     - name: Remove temporary heap dump files
       file:
-        path: "/tmp/jenkins_heap_dump_{{ ansible_date_time.epoch }}.hprof"
+        path: "/tmp/jenkins_heap_dump_{{ ansible_date_time.iso8601_basic }}.hprof"
         state: absent
       when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0
 
     - name: Remove temporary tar.gz file
       file:
-        path: "/tmp/jenkins_dumps_{{ ansible_date_time.epoch }}.tar.gz"
+        path: "/tmp/jenkins_dumps_{{ ansible_date_time.iso8601_basic }}.tar.gz"
         state: absent
       when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0
 
@@ -165,7 +167,8 @@
     - name: Send success email
       mail:
         host: localhost
-        to: "{{ notification_email }}"
+        from: "jenkins@localhost"
+        to: "root@localhost"
         subject: "Jenkins Maintenance Playbook Success"
         body: |
           All steps completed successfully on host {{ ansible_facts['hostname'] }}.
@@ -175,4 +178,4 @@
 
           Filesystem disk space usage:
           {{ disk_usage.stdout }}
-      when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0 and stop_sendmail_result.state == 'stopped' and stop_jenkins_result.state == 'stopped' and start_jenkins_result.status == 'started' and start_sendmail_result.state == 'started'
+      when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0 and stop_sendmail_result.state == 'stopped' and stop_jenkins_result.state == 'stopped' and start_jenkins_result.state == 'started' and start_sendmail_result.state == 'started'
