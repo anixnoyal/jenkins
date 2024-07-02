@@ -96,16 +96,12 @@ send_notification_email() {
                "Filesystem Disk Usage:\n$df_output\n\n"\
                "Jenkins Status:\n$jenkins_status"
 
-    # Sending email using sendmail
-    echo -e "From: $FROM_EMAIL\n"\
-            "To: $NOTIFICATION_EMAIL\n"\
-            "Subject: $email_subject\n"\
-            "\n"\
-            "$email_body" \
-    | sendmail -t
+    # Sending email using mail command
+    echo -e "$email_body" | mail -s "$email_subject" -r "$FROM_EMAIL" "$NOTIFICATION_EMAIL"
     
     return $?
 }
+
 
 # Main script execution
 
