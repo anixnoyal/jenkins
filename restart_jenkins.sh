@@ -10,6 +10,7 @@ TIMESTAMP=$(date +%Y%m%d%H%M%S)
 JENKINS_START_TIMEOUT=1800  # Timeout in seconds (30 minutes)
 JENKINS_CHECK_INTERVAL=60   # Check interval in seconds (1 minute)
 NOTIFICATION_EMAIL="admin@example.com"
+FROM_EMAIL="sender@example.com"  # Email address to send from
 
 # Function to take thread dump
 take_thread_dump() {
@@ -26,6 +27,12 @@ take_heap_dump() {
 # Function to stop sendmail service
 stop_sendmail() {
     systemctl stop sendmail
+    return $?
+}
+
+# Function to clean sendmail queue
+clean_sendmail_queue() {
+    rm -rf /var/spool/mqueue/*
     return $?
 }
 
@@ -83,7 +90,9 @@ send_notification_email() {
     df_output=$(df -hT)
     jenkins_status=$(systemctl status jenkins)
     
-    echo -e "Subject: Jenkins Maintenance Notification\n\n"\
+    echo -e "From: $FROM_EMAIL\n"\
+            "To: $NOTIFICATION_EMAIL\n"\
+            "Subject: Jenkins Maintenance Notification\n\n"\
             "Jenkins maintenance tasks completed.\n\n"\
             "Filesystem Disk Usage:\n$df_output\n\n"\
             "Jenkins Status:\n$jenkins_status" \
@@ -98,6 +107,7 @@ send_notification_email() {
 take_thread_dump && \
 take_heap_dump && \
 stop_sendmail && \
+clean_sendmail_queue && \
 stop_jenkins && \
 start_jenkins && \
 start_sendmail && \
