@@ -90,13 +90,19 @@ send_notification_email() {
     df_output=$(df -hT)
     jenkins_status=$(systemctl status jenkins)
     
+    # Constructing email content
+    email_subject="Jenkins Maintenance Notification"
+    email_body="Jenkins maintenance tasks completed.\n\n"\
+               "Filesystem Disk Usage:\n$df_output\n\n"\
+               "Jenkins Status:\n$jenkins_status"
+
+    # Sending email using sendmail
     echo -e "From: $FROM_EMAIL\n"\
             "To: $NOTIFICATION_EMAIL\n"\
-            "Subject: Jenkins Maintenance Notification\n\n"\
-            "Jenkins maintenance tasks completed.\n\n"\
-            "Filesystem Disk Usage:\n$df_output\n\n"\
-            "Jenkins Status:\n$jenkins_status" \
-    | sendmail -t "$NOTIFICATION_EMAIL"
+            "Subject: $email_subject\n"\
+            "\n"\
+            "$email_body" \
+    | sendmail -t
     
     return $?
 }
