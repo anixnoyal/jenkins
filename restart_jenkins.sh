@@ -92,9 +92,10 @@ send_notification_email() {
     
     # Constructing email content
     email_subject="Jenkins Maintenance Notification"
-    email_body="Jenkins maintenance tasks completed.\n\n"\
-               "Filesystem Disk Usage:\n$df_output\n\n"\
-               "Jenkins Status:\n$jenkins_status"
+    echo -e "Jenkins maintenance tasks completed.\n\n"\
+             "Filesystem Disk Usage:\n$df_output\n\n"\
+             "Jenkins Status:\n$jenkins_status" \
+    > "$EMAIL_BODY_FILE"
 
     # Sending email using mail command
     echo -e "$email_body" | mail -s "$email_subject" -r "$FROM_EMAIL" "$NOTIFICATION_EMAIL"
