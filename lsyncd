@@ -37,8 +37,8 @@ ls /mnt/disk1/target/
 
 vi /etc/systemd/system/lsyncd.service.d/override.conf
 [Service]
-ExecStart=
-ExecStart=/usr/bin/lsyncd -log all /path/to/custom_lsyncd.conf.lua
+ExecStartPre=/bin/bash -c "cpulimit --limit=20 --exe=lsyncd"
+
 
 
 sudo systemctl daemon-reload
