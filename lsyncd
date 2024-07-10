@@ -13,11 +13,9 @@ ssh -i /path/to/private/key3 remoteuser3@remotehost3
 
 
 
-#check syntax 
-lua -p /etc/lsyncd/lsyncd.conf.lua
-
-#Run lsyncd in Debug Mode:
-lsyncd -nodaemon -log all /etc/lsyncd/lsyncd.conf.lua
+    onStartup = function()
+        os.execute("cpulimit --limit=20 --exe lsyncd")
+    end
 
 #logs
 tail -f /var/log/lsyncd/lsyncd.log
