@@ -1,0 +1,125 @@
+
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+
+
+ssh-copy-id -i ~/.ssh/id_rsa.pub remoteuser1@remotehost1
+ssh-copy-id -i ~/.ssh/id_rsa.pub remoteuser2@remotehost2
+ssh-copy-id -i ~/.ssh/id_rsa.pub remoteuser3@remotehost3
+
+#check ssh connections
+ssh -i /path/to/private/key1 remoteuser1@remotehost1
+ssh -i /path/to/private/key2 remoteuser2@remotehost2
+ssh -i /path/to/private/key3 remoteuser3@remotehost3
+
+
+
+#check syntax 
+lua -p /etc/lsyncd/lsyncd.conf.lua
+
+#Run lsyncd in Debug Mode:
+lsyncd -nodaemon -log all /etc/lsyncd/lsyncd.conf.lua
+
+#logs
+tail -f /var/log/lsyncd/lsyncd.log
+
+#Test Synchronization
+touch /mnt/disk1/source/testfile.txt
+ls /mnt/disk1/target/
+
+#modify
+echo "Hello, World!" > /mnt/disk1/source/testfile.txt
+cat /mnt/disk1/target/testfile.txt
+
+#delte 
+rm /mnt/disk1/source/testfile.txt
+ls /mnt/disk1/target/
+
+
+
+/etc/lsyncd/lsyncd.conf.lua
+
+
+settings {
+    logfile = "/var/log/lsyncd/lsyncd.log",
+    statusFile = "/var/log/lsyncd/lsyncd.status",
+    inotifyMode = "CloseWrite or Modify",
+    maxProcesses = 4,
+}
+
+-- Sync for Disk 1 with SSH Authentication
+sync {
+    default.rsyncssh,
+    source = "/mnt/disk1/source",
+    host = "remoteuser1@remotehost1",
+    targetdir = "/mnt/disk1/target",
+    delay = 5,
+    rsync = {
+        archive = true,      -- Preserves all attributes
+        compress = true,
+        perms = true,        -- Preserves permissions
+        links = true,        -- Handles symlinks
+        delete = true,       -- Mirrors deletions from source to target
+        verbose = true,
+        _extra = {
+            "--exclude=*.log",
+            "--exclude=*.tmp",
+            "--exclude=/path/to/excluded_directory"
+        },
+    },
+    ssh = {
+        port = 22,
+        identityFile = "/path/to/private/key1"
+    }
+}
+
+-- Sync for Disk 2 with SSH Authentication
+sync {
+    default.rsyncssh,
+    source = "/mnt/disk2/source",
+    host = "remoteuser2@remotehost2",
+    targetdir = "/mnt/disk2/target",
+    delay = 5,
+    rsync = {
+        archive = true,
+        compress = true,
+        perms = true,
+        links = true,
+        delete = true,
+        verbose = true,
+        _extra = {
+            "--exclude=*.log",
+            "--exclude=*.tmp",
+            "--exclude=/path/to/excluded_directory"
+        },
+    },
+    ssh = {
+        port = 22,
+        identityFile = "/path/to/private/key2"
+    }
+}
+
+-- Sync for Disk 3 with SSH Authentication
+sync {
+    default.rsyncssh,
+    source = "/mnt/disk3/source",
+    host = "remoteuser3@remotehost3",
+    targetdir = "/mnt/disk3/target",
+    delay = 5,
+    rsync = {
+        archive = true,
+        compress = true,
+        perms = true,
+        links = true,
+        delete = true,
+        verbose = true,
+        _extra = {
+            "--exclude=*.log",
+            "--exclude=*.tmp",
+            "--exclude=/path/to/excluded_directory"
+        },
+    },
+    ssh = {
+        port = 22,
+        identityFile = "/path/to/private/key3"
+    }
+}
