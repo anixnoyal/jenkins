@@ -35,6 +35,16 @@ rm /mnt/disk1/source/testfile.txt
 ls /mnt/disk1/target/
 
 
+vi /etc/systemd/system/lsyncd.service.d/override.conf
+[Service]
+ExecStart=
+ExecStart=/usr/bin/lsyncd -log all /path/to/custom_lsyncd.conf.lua
+
+
+sudo systemctl daemon-reload
+sudo systemctl restart lsyncd
+
+
 
 /etc/lsyncd/lsyncd.conf.lua
 
