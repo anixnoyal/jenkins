@@ -33,6 +33,32 @@ java.util.logging.FileHandler.append=true
 
 
 
+###
+import java.util.logging.Level
+import java.util.logging.LogManager
+import java.util.logging.Logger
+
+// Set the default log level to ALL
+LogManager logManager = LogManager.getLogManager()
+logManager.getLogger("").setLevel(Level.ALL)
+
+// Optionally, list all current loggers and their levels
+Logger.getLogger("").getParent().getLoggerNames().each { loggerName ->
+    Logger logger = logManager.getLogger(loggerName)
+    println "${loggerName}: ${logger.getLevel()}"
+}
+
+// Confirmation message
+println "Default log level set to ALL"
+
+####
+import java.util.logging.Level
+import java.util.logging.Logger
+
+Logger.getLogger("jenkins.branch.MultiBranchProject").setLevel(Level.ALL)
+Logger.getLogger("jenkins.branch.OrganizationFolder").setLevel(Level.ALL)
+
+
 
 
 ##quick config reload
