@@ -15,6 +15,26 @@ java.util.logging.FileHandler.formatter=java.util.logging.SimpleFormatter
 #.level= ALL
 
 
+####################### v2
+handlers= java.util.logging.ConsoleHandler, java.util.logging.FileHandler
+
+.level=INFO
+java.util.logging.ConsoleHandler.level=INFO
+java.util.logging.ConsoleHandler.formatter=java.util.logging.SimpleFormatter
+
+# Configuration for the file handler
+java.util.logging.FileHandler.level=INFO
+java.util.logging.FileHandler.pattern=%h/logs/jenkins.log
+#java.util.logging.FileHandler.limit=10000000
+java.util.logging.FileHandler.limit=1048576
+java.util.logging.FileHandler.count=10
+java.util.logging.FileHandler.formatter=java.util.logging.SimpleFormatter
+java.util.logging.FileHandler.append=true
+
+
+
+
+
 ##quick config reload
 /bin/systemctl kill -s HUP jenkins
 
