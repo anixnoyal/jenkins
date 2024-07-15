@@ -20,17 +20,20 @@ diff -u source_checksums.txt destination_checksums.txt
 # Define the folder path
 FOLDER_PATH="/path/to/main/folder"
 
+# Directory to exclude (replace with your directory name)
+EXCLUDE_DIR="directory_to_exclude"
+
 # Navigate to the main folder
 cd "$FOLDER_PATH"
 
-# Count the number of directories
-num_dirs=$(find . -type d | wc -l)
+# Count the number of directories (excluding EXCLUDE_DIR)
+num_dirs=$(find . -type d ! -path "./$EXCLUDE_DIR/*" -print | grep -c /)
 
-# Count the number of files
-num_files=$(find . -type f | wc -l)
+# Count the number of files (excluding EXCLUDE_DIR)
+num_files=$(find . -type f ! -path "./$EXCLUDE_DIR/*" | wc -l)
 
-# Calculate the total size of the main folder
-total_size=$(du -sh . | cut -f1)
+# Calculate the total size of the main folder (excluding EXCLUDE_DIR)
+total_size=$(du -sh --exclude="./$EXCLUDE_DIR" . | cut -f1)
 
 # Get the last modified timestamp of the folder
 last_modified=$(stat -c %y "$FOLDER_PATH")
@@ -41,3 +44,4 @@ echo "Number of directories: $num_dirs"
 echo "Number of files: $num_files"
 echo "Total size: $total_size"
 echo "Last modified: $last_modified"
+
