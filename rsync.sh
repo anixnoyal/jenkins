@@ -17,7 +17,6 @@ diff -u source_checksums.txt destination_checksums.txt
 
 
 
-
 #!/bin/bash
 
 # Define the folder path
@@ -39,17 +38,19 @@ generate_exclude_options() {
     for dir in "${EXCLUDE_DIRS[@]}"; do
         exclude_opts+=("--exclude=/$dir/")
     done
+    # Exclude .log files as well
+    exclude_opts+=("--exclude=*.log")
     echo "${exclude_opts[@]}"
 }
 
 # Count the number of directories (excluding EXCLUDE_DIRS)
 num_dirs=$(find . -type d "${EXCLUDE_DIRS[@]/#/! -path .\/}" -print | grep -c /)
 
-# Count the number of files (excluding EXCLUDE_DIRS)
-num_files=$(find . -type f "${EXCLUDE_DIRS[@]/#/! -path .\/}" | wc -l)
+# Count the number of files (excluding EXCLUDE_DIRS and *.log files)
+num_files=$(find . -type f "${EXCLUDE_DIRS[@]/#/! -path .\/}" ! -name '*.log' | wc -l)
 
-# Calculate the total size of the main folder (excluding EXCLUDE_DIRS)
-total_size=$(du -sh --exclude=$(IFS=, ; echo "${EXCLUDE_DIRS[*]}") . | cut -f1)
+# Calculate the total size of the main folder (excluding EXCLUDE_DIRS and *.log files)
+total_size=$(du -sh --exclude=$(IFS=, ; echo "${EXCLUDE_DIRS[*]}") . | grep -v '\.log$' | cut -f1)
 
 # Get the last modified timestamp of the folder
 last_modified=$(stat -c %y "$FOLDER_PATH")
