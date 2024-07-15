@@ -15,25 +15,41 @@ ssh -i /path/to/private_key user@remote_host "cd /path/to/destination_directory 
 diff -u source_checksums.txt destination_checksums.txt
 
 
+
+
+
 #!/bin/bash
 
 # Define the folder path
 FOLDER_PATH="/path/to/main/folder"
 
-# Directory to exclude (replace with your directory name)
-EXCLUDE_DIR="directory_to_exclude"
+# Directories to exclude (replace with your directory names)
+EXCLUDE_DIRS=(
+    "directory_to_exclude1"
+    "directory_to_exclude2"
+    "directory_to_exclude3"
+)
 
 # Navigate to the main folder
 cd "$FOLDER_PATH"
 
-# Count the number of directories (excluding EXCLUDE_DIR)
-num_dirs=$(find . -type d ! -path "./$EXCLUDE_DIR/*" -print | grep -c /)
+# Function to generate --exclude options for rsync
+generate_exclude_options() {
+    local exclude_opts=()
+    for dir in "${EXCLUDE_DIRS[@]}"; do
+        exclude_opts+=("--exclude=/$dir/")
+    done
+    echo "${exclude_opts[@]}"
+}
 
-# Count the number of files (excluding EXCLUDE_DIR)
-num_files=$(find . -type f ! -path "./$EXCLUDE_DIR/*" | wc -l)
+# Count the number of directories (excluding EXCLUDE_DIRS)
+num_dirs=$(find . -type d "${EXCLUDE_DIRS[@]/#/! -path .\/}" -print | grep -c /)
 
-# Calculate the total size of the main folder (excluding EXCLUDE_DIR)
-total_size=$(du -sh --exclude="./$EXCLUDE_DIR" . | cut -f1)
+# Count the number of files (excluding EXCLUDE_DIRS)
+num_files=$(find . -type f "${EXCLUDE_DIRS[@]/#/! -path .\/}" | wc -l)
+
+# Calculate the total size of the main folder (excluding EXCLUDE_DIRS)
+total_size=$(du -sh --exclude=$(IFS=, ; echo "${EXCLUDE_DIRS[*]}") . | cut -f1)
 
 # Get the last modified timestamp of the folder
 last_modified=$(stat -c %y "$FOLDER_PATH")
@@ -44,4 +60,3 @@ echo "Number of directories: $num_dirs"
 echo "Number of files: $num_files"
 echo "Total size: $total_size"
 echo "Last modified: $last_modified"
-
