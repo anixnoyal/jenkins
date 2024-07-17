@@ -1,0 +1,9 @@
+We are excited to introduce our new Jenkins controller setup, designed to enhance your experience with improved performance and connectivity. Key features of this new architecture include:
+
+New Architecture with Fewer Network Hops: The updated setup minimizes network hops, resulting in faster and more efficient communication between Jenkins components.
+Jenkins Nodes Connections Using WebSocket: By utilizing WebSocket connections for Jenkins nodes, we ensure more stable and responsive interactions
+, improving overall system reliability.
+3. No More Firewall Requests: The new setup eliminates the need for firewall requests, simplifying the configuration process and enhancing security.
+4. New Node Creation Requirement: All users will need to create new nodes on this
+
+Jenkins controller, ensuring the selection of WebSocket for connections to leverage the full benefits of the new architecture.
