@@ -15,51 +15,34 @@ java.util.logging.FileHandler.formatter=java.util.logging.SimpleFormatter
 #.level= ALL
 
 
-####################### v2
-handlers= java.util.logging.ConsoleHandler, java.util.logging.FileHandler
+#### v5
+handlers= java.util.logging.FileHandler, custom.CustomFileHandler
 
+# Default global logging level
 .level=INFO
-java.util.logging.ConsoleHandler.level=INFO
-java.util.logging.ConsoleHandler.formatter=java.util.logging.SimpleFormatter
 
-# Configuration for the file handler
+# Log file handler configuration
 java.util.logging.FileHandler.level=INFO
-java.util.logging.FileHandler.pattern=%h/logs/jenkins.log
-#java.util.logging.FileHandler.limit=10000000
-java.util.logging.FileHandler.limit=1048576
-java.util.logging.FileHandler.count=10
+java.util.logging.FileHandler.pattern=/var/log/jenkins/jenkins.log
+java.util.logging.FileHandler.limit=50000000
+java.util.logging.FileHandler.count=5
 java.util.logging.FileHandler.formatter=java.util.logging.SimpleFormatter
-java.util.logging.FileHandler.append=true
 
+# Specific loggers configuration
+hudson.level=ALL
+jenkins.level=ALL
+org.springframework.level=INFO
 
+# Define a custom file handler for custom loggers
+custom.CustomFileHandler.level=ALL
+custom.CustomFileHandler.pattern=${user.home}/logs/custom/custom-%u-%g.log
+custom.CustomFileHandler.limit=100000000
+custom.CustomFileHandler.count=5
+custom.CustomFileHandler.formatter=java.util.logging.SimpleFormatter
 
-###
-import java.util.logging.Level
-import java.util.logging.LogManager
-import java.util.logging.Logger
-
-// Set the default log level to ALL
-LogManager logManager = LogManager.getLogManager()
-logManager.getLogger("").setLevel(Level.ALL)
-
-// Optionally, list all current loggers and their levels
-Logger.getLogger("").getParent().getLoggerNames().each { loggerName ->
-    Logger logger = logManager.getLogger(loggerName)
-    println "${loggerName}: ${logger.getLevel()}"
-}
-
-// Confirmation message
-println "Default log level set to ALL"
-
-####
-import java.util.logging.Level
-import java.util.logging.Logger
-
-Logger.getLogger("jenkins.branch.MultiBranchProject").setLevel(Level.ALL)
-Logger.getLogger("jenkins.branch.OrganizationFolder").setLevel(Level.ALL)
-
-
-
+# Logger for custom loggers
+custom.level=ALL
+custom.handlers=custom.CustomFileHandler
 
 ##quick config reload
 /bin/systemctl kill -s HUP jenkins
