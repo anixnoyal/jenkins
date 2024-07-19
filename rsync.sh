@@ -1,63 +1,54 @@
-
-
-rsync -avz --compress --links --exclude='/apps/opt/build_dir' --exclude='*.logs' -e "ssh -o StrictHostKeyChecking=no" /apps/opt/ user@remote:/target/directory/opt/
-
-rsync -avz --compress --links --exclude='*.logs' -e "ssh -o StrictHostKeyChecking=no" /apps/opt/build_dir/ user@remote:/target/directory/build_dir/
-
-
-#Generate Checksums on the Source Directory:
-ssh -i /path/to/private_key user@source_host "cd /path/to/source_directory && find . -type f -exec sha256sum {} +" | sort > source_checksums.txt
-
-#Generate Checksums on the Destination Directory:
-ssh -i /path/to/private_key user@remote_host "cd /path/to/destination_directory && find . -type f -exec sha256sum {} +" | sort > destination_checksums.txt
-
-#verify
-diff -u source_checksums.txt destination_checksums.txt
-
-
-
-
 #!/bin/bash
 
-# Define the folder path
-FOLDER_PATH="/path/to/main/folder"
+# Define source and destination directories for both volumes
+SOURCE1="/path/to/volume1/"
+DESTINATION1="user@remote_server:/path/to/destination1/"
 
-# Directories to exclude (replace with your directory names)
-EXCLUDE_DIRS=(
-    "directory_to_exclude1"
-    "directory_to_exclude2"
-    "directory_to_exclude3"
-)
+SOURCE2="/path/to/volume2/"
+DESTINATION2="user@remote_server:/path/to/destination2/"
 
-# Navigate to the main folder
-cd "$FOLDER_PATH"
+# Define log files
+LOG1="/path/to/logs/rsync_volume1.log"
+LOG2="/path/to/logs/rsync_volume2.log"
+MAIN_LOG="/path/to/logs/rsync_main.log"
 
-# Function to generate --exclude options for rsync
-generate_exclude_options() {
-    local exclude_opts=()
-    for dir in "${EXCLUDE_DIRS[@]}"; do
-        exclude_opts+=("--exclude=/$dir/")
-    done
-    # Exclude .log files as well
-    exclude_opts+=("--exclude=*.log")
-    echo "${exclude_opts[@]}"
+# Function to check if any rsync process is running
+check_rsync_running() {
+    if pgrep -x "rsync" > /dev/null; then
+        echo "$(date): Rsync is already running. Exiting script." >> "$MAIN_LOG"
+        exit 1
+    fi
 }
 
-# Count the number of directories (excluding EXCLUDE_DIRS)
-num_dirs=$(find . -type d "${EXCLUDE_DIRS[@]/#/! -path .\/}" -print | grep -c /)
+# Initial check to see if any rsync process is running
+check_rsync_running
 
-# Count the number of files (excluding EXCLUDE_DIRS and *.log files)
-num_files=$(find . -type f "${EXCLUDE_DIRS[@]/#/! -path .\/}" ! -name '*.log' | wc -l)
+# Run rsync for the first volume
+echo "$(date): Starting rsync for $SOURCE1 to $DESTINATION1" >> "$LOG1"
+rsync -avz --partial --progress "$SOURCE1" "$DESTINATION1" >> "$LOG1" 2>&1
 
-# Calculate the total size of the main folder (excluding EXCLUDE_DIRS and *.log files)
-total_size=$(du -sh --exclude=$(IFS=, ; echo "${EXCLUDE_DIRS[*]}") . | grep -v '\.log$' | cut -f1)
+# Wait for 15 minutes (900 seconds)
+sleep 900
 
-# Get the last modified timestamp of the folder
-last_modified=$(stat -c %y "$FOLDER_PATH")
+# Check if any rsync process is still running before starting the second one
+check_rsync_running
 
-# Display the results
-echo "Folder path: $FOLDER_PATH"
-echo "Number of directories: $num_dirs"
-echo "Number of files: $num_files"
-echo "Total size: $total_size"
-echo "Last modified: $last_modified"
+# Run rsync for the second volume
+echo "$(date): Starting rsync for $SOURCE2 to $DESTINATION2" >> "$LOG2"
+rsync -avz --partial --progress "$SOURCE2" "$DESTINATION2" >> "$LOG2" 2>&1 &
+
+# Get the PID of the last background process (the second rsync)
+RSYNC_PID=$!
+
+# Monitor the second rsync process
+echo "$(date): Monitoring rsync process with PID $RSYNC_PID" >> "$MAIN_LOG"
+wait $RSYNC_PID
+
+# Confirm completion of the second rsync process
+if [ $? -eq 0 ]; then
+    echo "$(date): Rsync for $SOURCE2 to $DESTINATION2 completed successfully." >> "$LOG2"
+else
+    echo "$(date): Rsync for $SOURCE2 to $DESTINATION2 encountered an error." >> "$LOG2"
+fi
+
+echo "$(date): Rsync operations completed for both volumes. Check logs for details." >> "$MAIN_LOG"
