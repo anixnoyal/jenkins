@@ -1,5 +1,5 @@
 #!/bin/bash
-PS1='\u@\[\033[0;31m\]\h\[\033[0m\] \# '
+PS1='\u@\[\033[0;31m\]CustomServerName\[\033[0m\] \# '
 
 # Define source and destination directories for both volumes
 SOURCE1="/path/to/volume1/"
