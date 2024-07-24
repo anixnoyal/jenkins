@@ -19,4 +19,6 @@ if (threadPool instanceof QueuedThreadPool) {
     println "Max Threads: ${threadPool.getMaxThreads()}"
     println "Min Threads: ${threadPool.getMinThreads()}"
     println "Idle Timeout: ${threadPool.getIdleTimeout()}"
+} else {
+    println "Thread pool is not an instance of QueuedThreadPool."
 }
