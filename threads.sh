@@ -10,3 +10,13 @@ JAVA_ARGS="-Dhudson.scm.SCM.checkoutRetryCount=5 -Dorg.eclipse.jetty.util.thread
 
 
 println hudson.scm.SCM.all().each { scm -> scm.getDescriptor().checkoutRetryCount }
+
+
+import org.eclipse.jetty.util.thread.QueuedThreadPool
+def server = Jenkins.instance.servletContext.getAttribute('org.eclipse.jetty.server.Server')
+def threadPool = server.getThreadPool()
+if (threadPool instanceof QueuedThreadPool) {
+    println "Max Threads: ${threadPool.getMaxThreads()}"
+    println "Min Threads: ${threadPool.getMinThreads()}"
+    println "Idle Timeout: ${threadPool.getIdleTimeout()}"
+}
