@@ -1,181 +1,29 @@
 ---
-- name: Jenkins Maintenance Playbook
-  hosts: localhost
+- name: Restart the Linux server and wait for Jenkins to be up
+  hosts: all
   become: yes
-  connection: local
-  vars:
-    notification_email: "admin@example.com"
-    jenkins_pid: "{{ lookup('pidof', 'java') }}"  # Adjust if necessary
-    artifactory_url: "http://artifactory.example.com/artifactory/my-repo"
-    artifactory_user: "your_username"
-    artifactory_password: "your_password"
-    jenkins_start_timeout: 1800  # Timeout in seconds (30 minutes)
-    jenkins_check_interval: 60   # Check interval in seconds (1 minute)
-    dumps_directory: "/var/lib/jenkins"
-    timestamp: "{{ lookup('pipe', 'date +%Y%m%d%H%M%S') }}"
-
   tasks:
-    - name: Gather system facts
-      setup:
 
-    - name: Take Jenkins thread dump
-      shell:
-        cmd: "jcmd {{ jenkins_pid }} Thread.print > {{ dumps_directory }}/jenkins_thread_dump_{{ timestamp }}.txt"
-      register: thread_dump_result
-      failed_when: thread_dump_result.rc != 0
+    - name: Restart the server
+      shell: |
+        shutdown -r now
+      async: 1
+      poll: 0
+      ignore_errors: true
 
-    - name: Display thread dump status
-      debug:
-        msg: "Thread dump status: {{ 'SUCCESS' if thread_dump_result.rc == 0 else 'FAILED' }}"
+    - name: Wait for server to be back online
+      wait_for_connection:
+        timeout: 600  # Wait for up to 10 minutes for the server to come back online
 
-    - name: Fail if thread dump failed
-      fail:
-        msg: "Thread dump failed on host {{ inventory_hostname }}. Stopping playbook."
-      when: thread_dump_result.rc != 0
+    - name: Wait for Jenkins service to be active
+      wait_for:
+        port: 8443  # Jenkins port
+        delay: 10  # Initial delay before starting to check
+        timeout: 2400  # 40 minutes in seconds
+        state: started
+        msg: "Jenkins service is not up after 40 minutes."
 
-    - name: Take Jenkins heap dump
-      shell:
-        cmd: "jcmd {{ jenkins_pid }} GC.heap_dump {{ dumps_directory }}/jenkins_heap_dump_{{ timestamp }}.hprof"
-      register: heap_dump_result
-      failed_when: heap_dump_result.rc != 0
-      when: thread_dump_result.rc == 0
-
-    - name: Display heap dump status
-      debug:
-        msg: "Heap dump status: {{ 'SUCCESS' if heap_dump_result.rc == 0 else 'FAILED' }}"
-      when: thread_dump_result.rc == 0
-
-    - name: Fail if heap dump failed
-      fail:
-        msg: "Heap dump failed on host {{ inventory_hostname }}. Stopping playbook."
-      when: heap_dump_result.rc != 0
-
-    - name: Stop sendmail service
-      service:
-        name: sendmail
-        state: stopped
-      register: stop_sendmail_result
-      failed_when: stop_sendmail_result.changed
-      when: heap_dump_result.rc == 0
-
-    - name: Display sendmail stop status
-      debug:
-        msg: "Sendmail stop status: {{ 'SUCCESS' if stop_sendmail_result.changed else 'FAILED' }}"
-      when: heap_dump_result.rc == 0
-
-    - name: Fail if stopping sendmail failed
-      fail:
-        msg: "Stopping sendmail failed on host {{ inventory_hostname }}. Stopping playbook."
-      when: stop_sendmail_result.changed
-
-    - name: Stop Jenkins service
-      service:
-        name: jenkins
-        state: stopped
-      register: stop_jenkins_result
-      failed_when: stop_jenkins_result.changed
-      when: stop_sendmail_result.changed
-
-    - name: Display Jenkins stop status
-      debug:
-        msg: "Jenkins stop status: {{ 'SUCCESS' if stop_jenkins_result.changed else 'FAILED' }}"
-      when: stop_sendmail_result.changed
-
-    - name: Fail if stopping Jenkins failed
-      fail:
-        msg: "Stopping Jenkins failed on host {{ inventory_hostname }}. Stopping playbook."
-      when: stop_jenkins_result.changed
-
-    - name: Start Jenkins service
+    - name: Ensure Jenkins service is running
       service:
         name: jenkins
         state: started
-      register: start_jenkins_result
-      retries: "{{ (jenkins_start_timeout // jenkins_check_interval) | default(0) }}"
-      delay: "{{ jenkins_check_interval }}"
-      until: start_jenkins_result.status == 'running'
-      failed_when: start_jenkins_result.failed or start_jenkins_result.status != 'running'
-      when: stop_jenkins_result.changed
-
-    - name: Display Jenkins start status
-      debug:
-        msg: "Jenkins start status: {{ 'SUCCESS' if start_jenkins_result.status == 'running' else 'FAILED' }}"
-      when: stop_jenkins_result.changed
-
-    - name: Fail if starting Jenkins failed
-      fail:
-        msg: "Starting Jenkins failed on host {{ inventory_hostname }}. Stopping playbook."
-      when: start_jenkins_result.failed or start_jenkins_result.status != 'running'
-
-    - name: Start sendmail service
-      service:
-        name: sendmail
-        state: started
-      register: start_sendmail_result
-      failed_when: start_sendmail_result.changed
-      when: start_jenkins_result.status == 'running'
-
-    - name: Display sendmail start status
-      debug:
-        msg: "Sendmail start status: {{ 'SUCCESS' if start_sendmail_result.changed else 'FAILED' }}"
-      when: start_jenkins_result.status == 'running'
-
-    - name: Fail if starting sendmail failed
-      fail:
-        msg: "Starting sendmail failed on host {{ inventory_hostname }}. Stopping playbook."
-      when: start_sendmail_result.changed
-
-    - name: Create tar.gz of dumps
-      shell:
-        cmd: "tar -czf {{ dumps_directory }}/jenkins_dumps_{{ timestamp }}.tar.gz {{ dumps_directory }}/jenkins_thread_dump_{{ timestamp }}.txt {{ dumps_directory }}/jenkins_heap_dump_{{ timestamp }}.hprof"
-      args:
-        creates: "{{ dumps_directory }}/jenkins_dumps_{{ timestamp }}.tar.gz"
-      register: tar_result
-      when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0
-
-    - name: Upload tar.gz to Artifactory
-      uri:
-        url: "{{ artifactory_url }}/jenkins_dumps_{{ timestamp }}.tar.gz"
-        method: PUT
-        user: "{{ artifactory_user }}"
-        password: "{{ artifactory_password }}"
-        body: "{{ lookup('file', '{{ dumps_directory }}/jenkins_dumps_{{ timestamp }}.tar.gz') }}"
-        body_format: raw
-        status_code: 201
-      register: upload_result
-      when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0 and tar_result is succeeded
-
-    - name: Remove dumps and tar.gz after upload
-      file:
-        path: "{{ item }}"
-        state: absent
-      with_items:
-        - "{{ dumps_directory }}/jenkins_thread_dump_{{ timestamp }}.txt"
-        - "{{ dumps_directory }}/jenkins_heap_dump_{{ timestamp }}.hprof"
-        - "{{ dumps_directory }}/jenkins_dumps_{{ timestamp }}.tar.gz"
-      when: upload_result is succeeded
-
-    - name: Get Jenkins service status
-      command: systemctl status jenkins
-      register: jenkins_status
-
-    - name: Get filesystem disk space usage
-      command: df -hT
-      register: disk_usage
-
-    - name: Send success email
-      mail:
-        host: localhost
-        port: 25
-        from: "jenkins@localhost"
-        to: "root@localhost"
-        subject: "Jenkins Maintenance Playbook Success"
-        body: |
-          All steps completed successfully on host {{ ansible_facts['hostname'] }}.
-
-          Jenkins service status:
-          {{ jenkins_status.stdout }}
-
-          Filesystem disk space usage:
-          {{ disk_usage.stdout }}
-      when: thread_dump_result.rc == 0 and heap_dump_result.rc == 0 and stop_sendmail_result.changed and stop_jenkins_result.changed and start_jenkins_result.status == 'running' and start_sendmail_result.changed
