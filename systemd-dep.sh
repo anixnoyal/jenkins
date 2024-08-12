@@ -40,3 +40,10 @@ top -bH -p $(pgrep -f jenkins) -n 1 > $DUMP_DIR/cpu_threads_$TIMESTAMP.txt
 
 
 chmod +x /usr/local/bin/jenkins_stop_collect.sh
+
+
+systemctl list-units --type=service --state=running --no-pager --all --no-legend | awk '{print $1}' | while read -r service; do
+    start_time=$(systemctl show "$service" --property=ActiveEnterTimestamp | cut -d'=' -f2)
+    echo "$start_time $service"
+done | sort
+
