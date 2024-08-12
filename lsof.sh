@@ -45,3 +45,31 @@ for user in $users; do
     # Display the results in a single line
     echo "$user | $open_files | $deleted_files"
 done
+
+
+#!/bin/bash
+
+# File containing the lsof output
+output_file="/path/to/output_file.txt"
+
+# Get the unique list of usernames from the output file (assuming the username is in the 3rd column)
+users=$(awk '{print $3}' $output_file | sort | uniq)
+
+# Loop through each user and count open and deleted files
+echo "User | Open Files | Deleted Files"
+echo "------------------------------------"
+
+for user in $users; do
+    # Check if the username starts with a letter (ignore usernames starting with 0-9)
+    if [[ ! $user =~ ^[0-9] ]]; then
+        # Count open files for the user
+        open_files=$(grep "^$user" $output_file | wc -l)
+        
+        # Count deleted files for the user
+        deleted_files=$(grep "^$user" $output_file | grep "(deleted)" | wc -l)
+        
+        # Display the results in a single line
+        echo "$user | $open_files | $deleted_files"
+    fi
+done
+
