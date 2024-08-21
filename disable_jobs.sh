@@ -1,5 +1,6 @@
 #!/bin/bash
-
+#getfacl -R /path/to/backup > acl_backup.txt
+#setfacl --restore=acl_backup.txt
 # Define file names, default permissions, and root directory
 PATTERN_FILE="search_pattern.txt"
 OUTPUT_FILE="directories_list.txt"
