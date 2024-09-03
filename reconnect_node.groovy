@@ -18,3 +18,32 @@ jenkins.nodes.each { node ->
         println "Reconnection attempt for node ${node.getNodeName()} done."
     }
 }
+
+
+// Define the name of the node you want to reconnect
+def nodeName = "<node_name>"
+
+// Get the Jenkins instance
+def jenkins = Jenkins.getInstance()
+
+// Get the specified node by name
+def node = jenkins.getNode(nodeName)
+
+if (node != null) {
+    // Check if the node's computer is offline
+    def computer = node.getComputer()
+    if (computer.isOnline()) {
+        println "Node '${nodeName}' is already online."
+    } else {
+        println "Node '${nodeName}' is offline. Attempting to reconnect..."
+        try {
+            // Attempt to reconnect the node
+            computer.connect(false)
+            println "Reconnection attempt for node '${nodeName}' done."
+        } catch (Exception e) {
+            println "Failed to reconnect node '${nodeName}': ${e.message}"
+        }
+    }
+} else {
+    println "Node '${nodeName}' not found."
+}
