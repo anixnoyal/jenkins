@@ -11,9 +11,9 @@ find "$JOBS_PATH" -type f \( -name "*.tar" -o -name "*.jar" \) | while read -r f
     if lsof "$file" > /dev/null 2>&1; then
         echo "File is in use by a process, skipping: $file"
     else
-        # File not in use, remove it safely
-        echo "Removing file: $file"
-        rm -v "$file"
+        # File not in use, remove it safely as the Jenkins user with verbose output
+        echo "Removing file as Jenkins user: $file"
+        sudo -u jenkins rm -v "$file"
         if [ $? -eq 0 ]; then
             echo "Successfully removed: $file"
         else
