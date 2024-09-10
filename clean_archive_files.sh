@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Set the log file path based on the script name with .log extension in a single line
+log_file="/tmp/$(basename "$0" .sh).log"
+
+# Redirect all output (stdout and stderr) to the log file
+exec > "$log_file" 2>&1
+
 # Variables
 JENKINS_HOME="/var/lib/jenkins"  # Path to Jenkins home (change if different)
 JOBS_PATH="$JENKINS_HOME/jobs"   # Jenkins jobs folder
