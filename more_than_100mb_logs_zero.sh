@@ -1,26 +1,33 @@
 #!/bin/bash
 
-# Directory to search for log files
-LOG_DIR="/path/to/logs"
-BACKUP_DIR="/path/to/backup"
+# Exit if any command fails
+set -eu
 
-# Ensure backup directory exists
-mkdir -p "$BACKUP_DIR"
+# Define the log file path based on the script name with .log extension
+log_file="/path/to/logs/$(basename "$0" .sh).log"
 
-# Find log files larger than 100 MB and process them
-find "$LOG_DIR" -type f -name "*.log" -size +100M | while read -r file; do
-  echo "Processing $file"
+# Redirect all output (stdout and stderr) to the log file
+exec > "$log_file" 2>&1
 
-  # Step 2: Copy the log file to the backup directory
-  cp "$file" "$BACKUP_DIR"
+# Log start time
+echo "Script started at: $(date)"
 
-  # Step 3: Create a temporary file with the top 100 lines
-  su -s /bin/bash jenkins -c "head -n 100 \"$file\" > \"/tmp/temp_log_file\""
+# Find .log files larger than 100MB
+find "$SEARCH_DIR" -type f -name "*.log" -size +100M | while read -r logfile; do
+    echo "Processing file: $logfile"
 
-  # Step 3: Replace the original file with only the top 100 lines
-  su -s /bin/bash jenkins -c "cat \"/tmp/temp_log_file\" > \"$file\""
+    # Check if the log file exists before attempting to process it
+    if [ ! -f "$logfile" ]; then
+        echo "ERROR: Log file does not exist: $logfile"
+        continue
+    fi
 
-  # Cleanup temporary file
-  rm -f /tmp/temp_log_file
+    # Take the top 100 lines from the log file and append them to the log file
+    sudo -u jenkins sh -c "head -n 100 \"$logfile\" >> \"$logfile\""
 
+    # Confirm the operations
+    echo "Appended top 100 lines to: $logfile"
 done
+
+# Log end time
+echo "Script ended at: $(date)"
