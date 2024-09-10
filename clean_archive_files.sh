@@ -13,7 +13,7 @@ find "$JOBS_PATH" -type f \( -name "*.tar" -o -name "*.jar" \) | while read -r f
     else
         # File not in use, remove it safely
         echo "Removing file: $file"
-        rm -f "$file"
+        rm -v "$file"
         if [ $? -eq 0 ]; then
             echo "Successfully removed: $file"
         else
