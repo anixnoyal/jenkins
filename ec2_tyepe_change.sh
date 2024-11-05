@@ -4,6 +4,18 @@
 INSTANCE_ID="i-1234567890abcdef0"   # Replace with your instance ID
 NEW_INSTANCE_TYPE="r6a.4xlarge"     # Desired instance type
 
+# Check if the instance exists
+echo "Checking if instance $INSTANCE_ID exists..."
+INSTANCE_STATUS=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[*].Instances[*].State.Name' --output text 2>/dev/null)
+
+# Exit if the instance ID is not found
+if [ -z "$INSTANCE_STATUS" ]; then
+  echo "Error: Instance ID $INSTANCE_ID not found. Exiting."
+  exit 1
+fi
+
+echo "Instance $INSTANCE_ID found with current state: $INSTANCE_STATUS"
+
 # Stop the instance
 echo "Stopping the instance $INSTANCE_ID..."
 aws ec2 stop-instances --instance-ids $INSTANCE_ID
