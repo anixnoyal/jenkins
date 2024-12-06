@@ -33,6 +33,17 @@ echo "$TOP_FOLDERS" | while read -r SIZE FOLDER; do
     else
         echo "$TOP_SUBFOLDERS" | while read -r SUBSIZE SUBFOLDER; do
             echo "  $SUBFOLDER: $SUBSIZE" >> "$TEMP_FILE"
+
+            # Find files larger than 100MB in the subfolder
+            LARGE_FILES=$(find "$SUBFOLDER" -type f -size +100M -exec du -sh {} + 2>/dev/null | sort -rh)
+            if [ -z "$LARGE_FILES" ]; then
+                echo "    No files larger than 100MB" >> "$TEMP_FILE"
+            else
+                echo "    Files larger than 100MB:" >> "$TEMP_FILE"
+                echo "$LARGE_FILES" | while read -r FILESIZE FILENAME; do
+                    echo "      $FILENAME: $FILESIZE" >> "$TEMP_FILE"
+                done
+            fi
         done
     fi
 done
