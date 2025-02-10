@@ -3,21 +3,20 @@ import jenkins.model.Jenkins
 def jenkins = Jenkins.instance
 
 try {
-    // Find the Jetty Server instance dynamically
-    def server = jenkins.servletContext.getAttribute("org.eclipse.jetty.server.Server")
+    // Find all executors (this includes Jetty's thread pool if managed by Jenkins)
+    def executors = jenkins.servletContext.getAttributeNames().findAll { it.toLowerCase().contains("executor") }
 
-    if (server) {
-        // Use reflection to find the thread pool
-        def threadPool = server.getConnectors().find { it.class.name.contains("ServerConnector") }?.getExecutor()
-
-        if (threadPool) {
-            def maxThreads = threadPool.metaClass.hasProperty(threadPool, "maxThreads") ? threadPool.maxThreads : "Unknown"
-            println "Jetty Thread Pool Size: ${maxThreads}"
-        } else {
-            println "Error: Jetty thread pool not found."
-        }
+    if (!executors) {
+        println "Error: No Jetty-related executors found in this Jenkins instance."
     } else {
-        println "Error: Jetty server instance not available in this Jenkins version."
+        executors.each { name ->
+            def executor = jenkins.servletContext.getAttribute(name)
+            if (executor?.metaClass.hasProperty(executor, "maxThreads")) {
+                println "Jetty Thread Pool Size (from ${name}): ${executor.maxThreads}"
+            } else {
+                println "Executor '${name}' found but maxThreads property not available."
+            }
+        }
     }
 } catch (Exception e) {
     println "Error retrieving Jetty thread pool size: ${e.message}"
