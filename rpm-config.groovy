@@ -1,3 +1,6 @@
+#-Djenkins.executor.count=0 -Dwinstone.maxThreads=0
+
+
 import jenkins.model.Jenkins
 
 def jenkins = Jenkins.instance
