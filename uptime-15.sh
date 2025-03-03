@@ -18,3 +18,6 @@ if (( RUNNING_DAYS > DAYS_LIMIT )); then
 else
     echo "Process $PID ($PROCESS_NAME) running for $RUNNING_DAYS days. No action needed."
 fi
+
+
+echo $(( ($(date +%s) - $(date -d "$(ps -o lstart= -p <PID>)" +%s)) / 86400 ))
