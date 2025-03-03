@@ -1,13 +1,20 @@
 #!/bin/bash
+
 PROCESS_NAME="your_process_name"
+DAYS_LIMIT=15  
+SCRIPT_TO_RUN="/path/to/your_script.sh"
 
-OLD_PROCESS=$(ps -eo pid,etimes,cmd | awk -v proc="$PROCESS_NAME" '$2 > 1296000 && $3 ~ proc {print $1}')
+# Get process running time in days
+read PID RUNNING_DAYS < <(ps -eo pid,etimes,cmd --no-header | awk -v proc="$PROCESS_NAME" '$3 ~ proc {print $1, int($2/86400); exit}')
 
-if [ ! -z "$OLD_PROCESS" ]; then
-    echo "Stopping old process: $OLD_PROCESS"
-    kill -9 $OLD_PROCESS
-    echo "Restarting process..."
-    /path/to/start_process.sh
+if [[ -z "$PID" ]]; then
+    echo "Process not running."
+    exit 1
+fi
+
+if (( RUNNING_DAYS > DAYS_LIMIT )); then
+    echo "Process $PID ($PROCESS_NAME) running for $RUNNING_DAYS days. Executing script..."
+    bash "$SCRIPT_TO_RUN"
 else
-    echo "No old process found."
+    echo "Process $PID ($PROCESS_NAME) running for $RUNNING_DAYS days. No action needed."
 fi
