@@ -104,3 +104,11 @@ java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().ea
 }
 
 println "\nScan completed!"
+
+
+
+import jenkins.branch.WorkspaceLocator
+
+// Set new pool size
+WorkspaceLocator.PoolSize = 10
+println "Index scan pool size updated to: ${WorkspaceLocator.PoolSize}"
