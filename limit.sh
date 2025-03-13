@@ -7,7 +7,22 @@ println System.getProperty("org.jenkinsci.plugins.workflow.multibranch.WorkflowM
 
 -Dorg.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject.concurrentIndexingLimit=100
 
-import jenkins.scm.api.SCMEventPool
 
-println "Current SCM Event Thread Pool Size: " + SCMEventPool.get().getCorePoolSize()
-println "Current Max SCM Event Threads: " + SCMEventPool.get().getMaximumPoolSize()
+
+
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
+
+def allExecutors = [
+    "SCM Event Pool": jenkins.scm.api.SCMEventPool.get(),
+    "Jenkins Timer Pool": jenkins.util.Timer.get(),
+    "GitHub Event Pool": org.jenkinsci.plugins.github.config.GitHubServerConfig.fetchExecutorService()
+]
+
+allExecutors.each { name, executor ->
+    if (executor instanceof ThreadPoolExecutor) {
+        println "$name → CorePoolSize: ${executor.getCorePoolSize()}, MaxPoolSize: ${executor.getMaximumPoolSize()}"
+    } else {
+        println "$name → Not a ThreadPoolExecutor, cannot modify."
+    }
+}
