@@ -59,3 +59,6 @@ executors.each { name, executor ->
 
 jenkins.model.Jenkins.instance.setNumExecutors(100)
 println "Updated Executor Pool Size to: " + jenkins.model.Jenkins.instance.numExecutors
+
+println "Jenkins Executors: " + jenkins.model.Jenkins.instance.numExecutors
+println "Queue Length: " + jenkins.model.Jenkins.instance.queue.items.size()
