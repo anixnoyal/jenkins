@@ -1,3 +1,3 @@
-println(Jenkins.instance.getDescriptorByType(
+Jenkins.get().getDescriptorByType(
     org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject.DescriptorImpl
-).getConcurrentIndexingLimit())
+).setConcurrentIndexingLimit(40)
