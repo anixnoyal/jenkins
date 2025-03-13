@@ -63,16 +63,12 @@ import java.util.concurrent.*
 import jenkins.util.Timer
 
 def executors = [
-    "Jenkins Timer Pool": Timer.get()
+    "Jenkins Timer Pool": Timer.get(),
+    "Jenkins Queue": jenkins.model.Jenkins.instance.queue
 ]
 
 executors.each { name, executor ->
-    if (executor instanceof ThreadPoolExecutor) {
-        println "$name → CorePoolSize: ${executor.getCorePoolSize()}, MaxPoolSize: ${executor.getMaximumPoolSize()}, Active Threads: ${executor.getActiveCount()}"
-    } else if (executor instanceof ScheduledThreadPoolExecutor) {
-        println "$name → Pool Size: ${executor.getPoolSize()}, Active Threads: ${executor.getActiveCount()}"
-    } else {
-        println "$name → Not a ThreadPoolExecutor, cannot modify."
-    }
+    println "$name → Class: ${executor.class.name}"
 }
+
 
