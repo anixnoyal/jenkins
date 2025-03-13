@@ -7,12 +7,7 @@ println System.getProperty("org.jenkinsci.plugins.workflow.multibranch.WorkflowM
 
 -Dorg.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject.concurrentIndexingLimit=100
 
-
 import jenkins.scm.api.SCMEventPool
-import java.util.concurrent.ThreadPoolExecutor
 
-ThreadPoolExecutor executor = (ThreadPoolExecutor) SCMEventPool.get()
-executor.setCorePoolSize(100)
-executor.setMaximumPoolSize(100)
-
-println "SCM Event Thread Pool Size set to: " + executor.getCorePoolSize()
+println "Current SCM Event Thread Pool Size: " + SCMEventPool.get().getCorePoolSize()
+println "Current Max SCM Event Threads: " + SCMEventPool.get().getMaximumPoolSize()
