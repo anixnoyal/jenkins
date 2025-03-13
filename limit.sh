@@ -9,10 +9,11 @@ println System.getProperty("org.jenkinsci.plugins.workflow.multibranch.WorkflowM
 
 
 
-import jenkins.util.Timer
+import io.jenkins.blueocean.events.Pool
+import java.util.concurrent.ThreadPoolExecutor
 
-int newThreadPoolSize = 100
-Timer.get().setCorePoolSize(newThreadPoolSize)
+ThreadPoolExecutor executor = (ThreadPoolExecutor) Pool.get()
+executor.setCorePoolSize(100)
+executor.setMaximumPoolSize(100)
 
-println "SCM event thread pool size set to: " + Timer.get().getCorePoolSize()
-
+println "SCM Event Thread Pool Size set to: " + executor.getCorePoolSize()
