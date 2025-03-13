@@ -13,16 +13,15 @@ println System.getProperty("org.jenkinsci.plugins.workflow.multibranch.WorkflowM
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
 
-def allExecutors = [
-    "SCM Event Pool": jenkins.scm.api.SCMEventPool.get(),
-    "Jenkins Timer Pool": jenkins.util.Timer.get(),
-    "GitHub Event Pool": org.jenkinsci.plugins.github.config.GitHubServerConfig.fetchExecutorService()
+def executors = [
+    "Jenkins Timer Pool": jenkins.util.Timer.get()
 ]
 
-allExecutors.each { name, executor ->
+executors.each { name, executor ->
     if (executor instanceof ThreadPoolExecutor) {
         println "$name → CorePoolSize: ${executor.getCorePoolSize()}, MaxPoolSize: ${executor.getMaximumPoolSize()}"
     } else {
         println "$name → Not a ThreadPoolExecutor, cannot modify."
     }
 }
+
