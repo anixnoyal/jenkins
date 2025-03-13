@@ -33,3 +33,26 @@ ScheduledThreadPoolExecutor executor = (ScheduledThreadPoolExecutor) Timer.get()
 executor.setCorePoolSize(100)
 
 println "Temporary: Jenkins Timer Pool thread size set to: " + executor.getCorePoolSize()
+
+
+
+
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import jenkins.util.Timer
+
+def executors = [
+    "Jenkins Timer Pool": Timer.get(),
+    "Jenkins Queue Executor": jenkins.model.Jenkins.instance.queue.leftItems,
+    "Jenkins Overall Thread Pool": java.util.concurrent.Executors.newCachedThreadPool()
+]
+
+executors.each { name, executor ->
+    if (executor instanceof ThreadPoolExecutor) {
+        println "$name → CorePoolSize: ${executor.getCorePoolSize()}, MaxPoolSize: ${executor.getMaximumPoolSize()}"
+    } else if (executor instanceof ScheduledThreadPoolExecutor) {
+        println "$name → Pool Size: ${executor.getPoolSize()}, Active Threads: ${executor.getActiveCount()}"
+    } else {
+        println "$name → Not a ThreadPoolExecutor, cannot modify."
+    }
+}
