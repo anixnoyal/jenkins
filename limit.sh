@@ -25,3 +25,10 @@ executors.each { name, executor ->
     }
 }
 
+import jenkins.util.Timer
+import java.util.concurrent.ScheduledThreadPoolExecutor
+
+ScheduledThreadPoolExecutor executor = (ScheduledThreadPoolExecutor) Timer.get()
+executor.setCorePoolSize(100)
+
+println "Temporary: Jenkins Timer Pool thread size set to: " + executor.getCorePoolSize()
