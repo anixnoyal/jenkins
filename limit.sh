@@ -8,11 +8,10 @@ println System.getProperty("org.jenkinsci.plugins.workflow.multibranch.WorkflowM
 -Dorg.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject.concurrentIndexingLimit=100
 
 
-
-import io.jenkins.blueocean.events.Pool
+import jenkins.scm.api.SCMEventPool
 import java.util.concurrent.ThreadPoolExecutor
 
-ThreadPoolExecutor executor = (ThreadPoolExecutor) Pool.get()
+ThreadPoolExecutor executor = (ThreadPoolExecutor) SCMEventPool.get()
 executor.setCorePoolSize(100)
 executor.setMaximumPoolSize(100)
 
