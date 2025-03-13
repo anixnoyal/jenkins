@@ -59,12 +59,20 @@ executors.each { name, executor ->
 
 
 
-
+import java.util.concurrent.*
 import jenkins.util.Timer
-import java.util.concurrent.ScheduledThreadPoolExecutor
 
-ScheduledThreadPoolExecutor executor = Timer.get()
-executor.setCorePoolSize(100)
-executor.setMaximumPoolSize(100)
+def executors = [
+    "Jenkins Timer Pool": Timer.get()
+]
 
-println "SCM Event Pool updated to: " + executor.getCorePoolSize()
+executors.each { name, executor ->
+    if (executor instanceof ThreadPoolExecutor) {
+        println "$name → CorePoolSize: ${executor.getCorePoolSize()}, MaxPoolSize: ${executor.getMaximumPoolSize()}, Active Threads: ${executor.getActiveCount()}"
+    } else if (executor instanceof ScheduledThreadPoolExecutor) {
+        println "$name → Pool Size: ${executor.getPoolSize()}, Active Threads: ${executor.getActiveCount()}"
+    } else {
+        println "$name → Not a ThreadPoolExecutor, cannot modify."
+    }
+}
+
