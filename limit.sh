@@ -109,6 +109,4 @@ println "\nScan completed!"
 
 import jenkins.branch.WorkspaceLocator
 
-// Set new pool size
-WorkspaceLocator.PoolSize = 10
-println "Index scan pool size updated to: ${WorkspaceLocator.PoolSize}"
+println "Current Index Scan Pool Size: ${WorkspaceLocator.POOL_SIZE}"
