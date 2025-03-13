@@ -62,3 +62,45 @@ println "Updated Executor Pool Size to: " + jenkins.model.Jenkins.instance.numEx
 
 println "Jenkins Executors: " + jenkins.model.Jenkins.instance.numExecutors
 println "Queue Length: " + jenkins.model.Jenkins.instance.queue.items.size()
+
+
+
+
+
+// Check system properties for any index scan-related settings
+println "Jenkins System Properties:"
+System.properties.each { key, value ->
+    if (key.toLowerCase().contains("index") || key.toLowerCase().contains("scan")) {
+        println "$key = $value"
+    }
+}
+
+// Check Jenkins global configuration for any related settings
+println "\nJenkins Global Configuration:"
+jenkinsInstance = jenkins.model.Jenkins.instance
+jenkinsInstance.globalNodeProperties.each { prop ->
+    if (prop.toString().toLowerCase().contains("index") || prop.toString().toLowerCase().contains("scan")) {
+        println prop
+    }
+}
+
+// Check Jenkins environment variables
+println "\nJenkins Environment Variables:"
+envVars = jenkinsInstance.getGlobalNodeProperties().getAll(hudson.slaves.EnvironmentVariablesNodeProperty)
+envVars.each { env ->
+    env.envVars.each { key, value ->
+        if (key.toLowerCase().contains("index") || key.toLowerCase().contains("scan")) {
+            println "$key = $value"
+        }
+    }
+}
+
+// Check system properties at runtime
+println "\nJVM Arguments:"
+java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().each { arg ->
+    if (arg.toLowerCase().contains("index") || arg.toLowerCase().contains("scan")) {
+        println arg
+    }
+}
+
+println "\nScan completed!"
