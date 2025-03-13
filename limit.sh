@@ -8,6 +8,7 @@ println System.getProperty("org.jenkinsci.plugins.workflow.multibranch.WorkflowM
 -Dorg.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject.concurrentIndexingLimit=100
 
 
+println "JVM Property: " + System.getProperty("jenkins.scm.events.poolSize")
 
 
 import java.util.concurrent.Executors
