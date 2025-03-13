@@ -57,18 +57,5 @@ executors.each { name, executor ->
     }
 }
 
-
-
-import java.util.concurrent.*
-import jenkins.util.Timer
-
-def executors = [
-    "Jenkins Timer Pool": Timer.get(),
-    "Jenkins Queue": jenkins.model.Jenkins.instance.queue
-]
-
-executors.each { name, executor ->
-    println "$name → Class: ${executor.class.name}"
-}
-
-
+jenkins.model.Jenkins.instance.setNumExecutors(100)
+println "Updated Executor Pool Size to: " + jenkins.model.Jenkins.instance.numExecutors
