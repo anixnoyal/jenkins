@@ -9,15 +9,8 @@ def descriptor = Jenkins.get().getDescriptorByType(
 )
 println(descriptor.metaClass.methods*.name.sort().unique())
 
-
 import jenkins.model.Jenkins
 
-def descriptor = Jenkins.get().getDescriptorByType(
-    org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject.DescriptorImpl
-)
+Jenkins.get().systemProperties.setProperty("org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject.concurrentIndexingLimit", "4")
 
-def field = descriptor.class.getDeclaredField("concurrentIndexingLimit")
-field.setAccessible(true)
-field.set(descriptor, 4)
-
-println "Concurrent indexing limit set to: " + field.get(descriptor)
+println "Concurrent indexing limit set to 4!"
