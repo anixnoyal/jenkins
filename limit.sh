@@ -56,3 +56,15 @@ executors.each { name, executor ->
         println "$name → Not a ThreadPoolExecutor, cannot modify."
     }
 }
+
+
+
+
+import jenkins.util.Timer
+import java.util.concurrent.ScheduledThreadPoolExecutor
+
+ScheduledThreadPoolExecutor executor = Timer.get()
+executor.setCorePoolSize(100)
+executor.setMaximumPoolSize(100)
+
+println "SCM Event Pool updated to: " + executor.getCorePoolSize()
