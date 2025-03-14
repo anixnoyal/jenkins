@@ -24,3 +24,10 @@
 
 
 #export JAVA_OPTS="$JAVA_OPTS -Djenkins.scm.api.SCMEvent.EVENT_THREAD_POOL_SIZE=100"
+
+import jenkins.util.SystemProperties
+
+SystemProperties.setInteger("jenkins.scm.api.SCMEvent.EVENT_THREAD_POOL_SIZE", 100)
+
+println "Temporary EVENT_THREAD_POOL_SIZE set to: " + SystemProperties.getInteger("jenkins.scm.api.SCMEvent.EVENT_THREAD_POOL_SIZE", 10)
+
