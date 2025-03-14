@@ -1,0 +1,9 @@
+<proxies>
+    <proxy>
+        <id>example-proxy</id>
+        <active>true</active>
+        <protocol>http</protocol>
+        <host>your.proxy.com</host>
+        <port>8080</port>
+    </proxy>
+</proxies>
