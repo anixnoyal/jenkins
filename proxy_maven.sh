@@ -1,9 +1,23 @@
-<proxies>
-    <proxy>
-        <id>example-proxy</id>
-        <active>true</active>
-        <protocol>http</protocol>
-        <host>your.proxy.com</host>
-        <port>8080</port>
-    </proxy>
-</proxies>
+<settings>
+    <proxies>
+        <!-- HTTP Proxy -->
+        <proxy>
+            <id>http-proxy</id>
+            <active>true</active>
+            <protocol>http</protocol>
+            <host>proxy.example.com</host>
+            <port>8080</port>
+            <nonProxyHosts>localhost|127.0.0.1|*.mycompany.com</nonProxyHosts>
+        </proxy>
+
+        <!-- HTTPS Proxy -->
+        <proxy>
+            <id>https-proxy</id>
+            <active>true</active>
+            <protocol>https</protocol>
+            <host>secureproxy.example.com</host>
+            <port>8443</port>
+            <nonProxyHosts>localhost|127.0.0.1|*.mycompany.com</nonProxyHosts>
+        </proxy>
+    </proxies>
+</settings>
