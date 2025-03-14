@@ -21,3 +21,6 @@
         </proxy>
     </proxies>
 </settings>
+
+
+#export JAVA_OPTS="$JAVA_OPTS -Djenkins.scm.api.SCMEvent.EVENT_THREAD_POOL_SIZE=100"
