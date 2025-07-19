@@ -6,6 +6,4 @@ env:
 
 
 
-annotations:
-  alb.ingress.kubernetes.io/actions.forward-gts: >
-    {"type":"forward","forwardConfig":{"targetGroups":[{"serviceName":"jenkins-gts","servicePort":"80"}]}}
+kubectl exec -it <jenkins-pod-name> -n <namespace> -- cat /var/jenkins_home/secrets/initialAdminPassword
